@@ -55,7 +55,7 @@
       const senha = document.getElementById('senha').value;
 
       // Envia os dados para o backend
-      fetch(`http://${window.location.hostname}:3000/login`, {
+      fetch(`/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

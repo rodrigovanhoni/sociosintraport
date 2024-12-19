@@ -1,22 +1,27 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="site.webmanifest">
-  <link rel="icon" href="favicon.ico">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="icon" href="favicon.ico" />
 
-  <title>Sistema de Cadastro de Sócios</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Sistema de Cadastro de Sócios</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
 
-  <style>
-    
-    /* Esconder todas as colunas exceto Nome e CPF em dispositivos móveis */
+    <style>
+      /* Esconder todas as colunas exceto Nome e CPF em dispositivos móveis */
 
-@media (max-width: 600px){
-  th:nth-child(4), td:nth-child(4),  /* Grupo Whats */
+      @media (max-width: 600px) {
+        th:nth-child(4), td:nth-child(4),  /* Grupo Whats */
   th:nth-child(5), td:nth-child(5),  /* ?? */
   th:nth-child(8), td:nth-child(8),  /* Grupo Whats */
   th:nth-child(9), td:nth-child(9),  /* Cargo */
@@ -28,632 +33,869 @@
   th:nth-child(15), td:nth-child(15), /* Endereço Obs */
   th:nth-child(16), td:nth-child(16), /* Apelido */
   th:nth-child(17), td:nth-child(17),  /* Estado Civil */
-  th:nth-child(18), td:nth-child(18)  /* Estado Civil */
-  
-  {
-    display: none; /* Ocultar essas colunas em telas pequenas */
-  }
-}
+  th:nth-child(18), td:nth-child(18)  /* Estado Civil */ {
+          display: none; /* Ocultar essas colunas em telas pequenas */
+        }
+      }
 
-    #sociosForm {
-      display: none; /* Oculta o formulário inicialmente */
-    }
+      #sociosForm {
+        display: none; /* Oculta o formulário inicialmente */
+      }
 
-    /* Personalizar elementos para uma melhor aparência */
-    body {
-      background-color: #f8f9fa;
-      padding: 20px;
-    }
+      /* Personalizar elementos para uma melhor aparência */
+      body {
+        background-color: #f8f9fa;
+        padding: 20px;
+      }
 
-    h1 {
-      font-size: 1.5rem;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    form {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn {
-      width: 100%;
-      font-size: 1.2rem;
-    }
-
-    #resultado {
-      margin-top: 20px;
-    }
-
-    #colunas1 {
-      display: none;
-    }
-
-    @media (min-width: 768px) {
       h1 {
-        font-size: 2rem;
+        font-size: 1.5rem;
+        text-align: center;
+        margin-bottom: 20px;
       }
 
       form {
-        padding: 30px;
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
 
-      .btn-sm {
-      width: 40px; /* Botão menor com tamanho fixo */
-      height: 40px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+      .btn {
+        width: 100%;
+        font-size: 1.2rem;
+      }
 
-    .action-btns {
-      display: flex;
-      gap: 5px; /* Espaçamento entre os botões */
-    }
+      #resultado {
+        margin-top: 20px;
+      }
 
-    .pagination {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    .pagination button {
-      margin: 0 5px;
-    }
+      #colunas1 {
+        display: none;
+      }
 
-  }
+      @media (min-width: 768px) {
+        h1 {
+          font-size: 2rem;
+        }
 
-  .checkbox-columns {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    .checkbox-column {
-      flex: 1;
-      min-width: 200px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container mt-4">
-    <h1>Sistema de Cadastro de Sócios</h1>
+        form {
+          padding: 30px;
+        }
 
-    <!-- Botão para Exibir o Formulário de Novo Sócio -->
-    <button id="showFormButton" class="btn btn-success mb-3 btn-sm"><i class="fas fa-plus-circle"></i>
-    </button>
+        .btn-sm {
+          width: 40px; /* Botão menor com tamanho fixo */
+          height: 40px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
 
-    <!-- Formulário de Cadastro (oculto inicialmente) -->
-<form id="sociosForm" class="mb-4">
-  <input type="hidden" id="socioId" /> <!-- Campo oculto para armazenar o ID do sócio durante a edição -->
+        .action-btns {
+          display: flex;
+          gap: 5px; /* Espaçamento entre os botões */
+        }
 
-  <div class="mb-3">
-    <label for="nome" class="form-label">Nome</label>
-    <input type="text" class="form-control" id="nome" placeholder="Nome" required />
-  </div>
+        .pagination {
+          display: flex;
+          justify-content: center;
+          margin-top: 20px;
+        }
+        .pagination button {
+          margin: 0 5px;
+        }
+      }
 
-  <div class="mb-3">
-    <label for="cpf" class="form-label">CPF</label>
-    <input type="text" class="form-control" id="cpf" placeholder="CPF" required />
-  </div>
+      .checkbox-columns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .checkbox-column {
+        flex: 1;
+        min-width: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-4">
+      <h1>Sistema de Cadastro de Sócios</h1>
 
-  <div class="mb-3">
-    <label for="data_nascimento" class="form-label">Data de Nascimento</label>
-    <input type="date" class="form-control" id="data_nascimento" placeholder="Data de Nascimento" required />
-  </div>
+      <!-- Botão para Exibir o Formulário de Novo Sócio -->
+      <button id="showFormButton" class="btn btn-success mb-3 btn-sm">
+        <i class="fas fa-plus-circle"></i>
+      </button>
 
-  <!-- Campo Parentesco (opcional, mostrado apenas quando necessário) -->
-  <div class="mb-3" id="parentesco-field" style="display: none;">
-    <label for="parentesco" class="form-label">Parentesco</label>
-    <input type="text" class="form-control" id="parentesco" placeholder="Parentesco" />
-  </div>
+      <!-- Formulário de Cadastro (oculto inicialmente) -->
+      <form id="sociosForm" class="mb-4">
+        <input type="hidden" id="socioId" />
+        <!-- Campo oculto para armazenar o ID do sócio durante a edição -->
 
-  <div class="mb-3" id="email-field">
-    <label for="email" class="form-label">Email</label>
-    <input type="email" class="form-control" id="email" placeholder="Email" required />
-  </div>
-
-  <div class="mb-3" id="telefone-field">
-    <label for="telefone" class="form-label">Telefone</label>
-    <input type="number" class="form-control" id="telefone" placeholder="Telefone" required/>
-  </div>
-
-  <div class="mb-3" id="matricula-field">
-    <label for="matricula" class="form-label">Matrícula</label>
-    <input type="number" maxlength="4" class="form-control" id="matricula" placeholder="Matrícula" required/>
-  </div>
-
-  <div class="mb-3" id="aposentado-field">
-    <label for="aposentado" class="form-label">Aposentado</label>
-    <select id="aposentado" class="form-control">
-      <option value="1">SIM</option>
-      <option value="0">NÃO</option>
-    </select>
-  </div>
-
-  <div class="mb-3" id="grupoWhats-field">
-    <label for="grupoWhats" class="form-label">Está no Grupo WhatsApp?</label>
-    <select id="grupoWhats" class="form-control">
-      <option value="1">SIM</option>
-      <option value="0">NÃO</option>
-    </select>
-  </div>
-
-  <div class="mb-3" id="cargo-field">
-    <label for="cargo" class="form-label">Cargo</label>
-    <select id="cargo" class="form-control">
-      <!-- As opções serão preenchidas dinamicamente -->
-    </select>
-  </div>
-
-  <div class="mb-3" id="data_admissao-field">
-    <label for="data_admissao" class="form-label">Data de Admissão</label>
-    <input type="date" class="form-control" id="data_admissao" placeholder="Data de Admissão" />
-  </div>
-
-  <div class="mb-3" id="data_associacao-field">
-    <label for="data_associacao" class="form-label">Data de Associação</label>
-    <input type="date" class="form-control" id="data_associacao" placeholder="Data de Associação" />
-  </div>
-
-  <div class="mb-3" id="endereco_rua-field">
-    <label for="endereco_rua" class="form-label">Endereço (Rua)</label>
-    <input type="text" class="form-control" id="endereco_rua" placeholder="Endereço Rua" />
-  </div>
-
-  <div class="mb-3" id="endereco_num-field">
-    <label for="endereco_num" class="form-label">Endereço (Número)</label>
-    <input type="text" class="form-control" id="endereco_num" placeholder="Endereço Número" />
-  </div>
-
-  <div class="mb-3" id="endereco_obs-field">
-    <label for="endereco_obs" class="form-label">Endereço (Observação)</label>
-    <input type="text" class="form-control" id="endereco_obs" placeholder="Observação" />
-  </div>
-
-  <div class="mb-3" id="apelido-field">
-    <label for="apelido" class="form-label">Apelido</label>
-    <input type="text" class="form-control" id="apelido" placeholder="Apelido" />
-  </div>
-
-  <div class="mb-3" id="estado_civil-field">
-    <label for="estado_civil" class="form-label">Estado Civil</label>
-    <input type="text" class="form-control" id="estado_civil" placeholder="Estado Civil" />
-  </div>
-
-  <!-- Botões de controle -->
-  <button type="submit" class="btn btn-primary" id="submitButton">Cadastrar Sócio</button>
-  <button id="hideFormButton" class="btn btn-secondary" type="button">Cancelar</button>
-</form>
-
-
-    <!-- Campo de Filtro -->
-    <input type="text" id="filterInput" class="form-control mb-3" placeholder="Filtrar Sócios">
-
-    <div class="container" id="colunas">
-      <h1 id="toggleColumnsButton">Exibir/Ocultar Colunas da Tabela</h1>
-  
-      <!-- Checkboxes para selecionar colunas -->
-      <div class="checkbox-columns" id="colunas1">
-        <div class="checkbox-column">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="nome" id="checkNome" checked>
-            <label class="form-check-label" for="checkNome">Nome</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="cpf" id="checkCPF" checked>
-            <label class="form-check-label" for="checkCPF">CPF</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="data_nascimento" id="checkNascimento">
-            <label class="form-check-label" for="checkNascimento">Data de Nascimento</label>
-          </div>
-         
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="email" id="checkEmail" checked>
-            <label class="form-check-label" for="checkEmail">Email</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="telefone" id="checkTelefone" checked>
-            <label class="form-check-label" for="checkTelefone">Telefone</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="matricula" id="checkMatricula" checked>
-            <label class="form-check-label" for="checkMatricula">Matrícula</label>
-          </div>
-          
+        <div class="mb-3">
+          <label for="nome" class="form-label">Nome</label>
+          <input
+            type="text"
+            class="form-control"
+            id="nome"
+            placeholder="Nome"
+            required
+          />
         </div>
-  
-        <div class="checkbox-column">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="Aposentado" id="checkAposentado">
-            <label class="form-check-label" for="checkAposentado">Aposentado</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="GrupoWhats" id="checkGrupoWhats">
-            <label class="form-check-label" for="checkGrupoWhats">Grupo WhatsApp</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="Cargo" id="checkCargo" >
-            <label class="form-check-label" for="checkCargo">Cargo</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="DataAdmissao" id="checkDataAdmissao" >
-            <label class="form-check-label" for="checkDataAdmissao">Data de Admissão</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="DataDesligamento" id="checkDataDesligamento">
-            <label class="form-check-label" for="checkDataDesligamento">Data de Desligamento</label>
-          </div>
-          
+
+        <div class="mb-3">
+          <label for="cpf" class="form-label">CPF</label>
+          <input
+            type="text"
+            class="form-control"
+            id="cpf"
+            placeholder="CPF"
+            required
+          />
         </div>
-  
-        <div class="checkbox-column">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="DataAssociacao" id="checkDataAssociacao" >
-            <label class="form-check-label" for="checkDataAssociacao">Data de Associação</label>
+
+        <div class="mb-3">
+          <label for="data_nascimento" class="form-label"
+            >Data de Nascimento</label
+          >
+          <input
+            type="date"
+            class="form-control"
+            id="data_nascimento"
+            placeholder="Data de Nascimento"
+            required
+          />
+        </div>
+
+        <!-- Campo Parentesco (opcional, mostrado apenas quando necessário) -->
+        <div class="mb-3" id="parentesco-field" style="display: none">
+          <label for="parentesco" class="form-label">Parentesco</label>
+          <input
+            type="text"
+            class="form-control"
+            id="parentesco"
+            placeholder="Parentesco"
+          />
+        </div>
+
+        <div class="mb-3" id="email-field">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            placeholder="Email"
+            required
+          />
+        </div>
+
+        <div class="mb-3" id="telefone-field">
+          <label for="telefone" class="form-label">Telefone</label>
+          <input
+            type="number"
+            class="form-control"
+            id="telefone"
+            placeholder="Telefone"
+            required
+          />
+        </div>
+
+        <div class="mb-3" id="matricula-field">
+          <label for="matricula" class="form-label">Matrícula</label>
+          <input
+            type="number"
+            maxlength="4"
+            class="form-control"
+            id="matricula"
+            placeholder="Matrícula"
+            required
+          />
+        </div>
+
+        <div class="mb-3" id="aposentado-field">
+          <label for="aposentado" class="form-label">Aposentado</label>
+          <select id="aposentado" class="form-control">
+            <option value="1">SIM</option>
+            <option value="0">NÃO</option>
+          </select>
+        </div>
+
+        <div class="mb-3" id="grupoWhats-field">
+          <label for="grupoWhats" class="form-label"
+            >Está no Grupo WhatsApp?</label
+          >
+          <select id="grupoWhats" class="form-control">
+            <option value="1">SIM</option>
+            <option value="0">NÃO</option>
+          </select>
+        </div>
+
+        <div class="mb-3" id="cargo-field">
+          <label for="cargo" class="form-label">Cargo</label>
+          <select id="cargo" class="form-control">
+            <!-- As opções serão preenchidas dinamicamente -->
+          </select>
+        </div>
+
+        <div class="mb-3" id="data_admissao-field">
+          <label for="data_admissao" class="form-label">Data de Admissão</label>
+          <input
+            type="date"
+            class="form-control"
+            id="data_admissao"
+            placeholder="Data de Admissão"
+          />
+        </div>
+
+        <div class="mb-3" id="data_associacao-field">
+          <label for="data_associacao" class="form-label"
+            >Data de Associação</label
+          >
+          <input
+            type="date"
+            class="form-control"
+            id="data_associacao"
+            placeholder="Data de Associação"
+          />
+        </div>
+
+        <div class="mb-3" id="endereco_rua-field">
+          <label for="endereco_rua" class="form-label">Endereço (Rua)</label>
+          <input
+            type="text"
+            class="form-control"
+            id="endereco_rua"
+            placeholder="Endereço Rua"
+          />
+        </div>
+
+        <div class="mb-3" id="endereco_num-field">
+          <label for="endereco_num" class="form-label">Endereço (Número)</label>
+          <input
+            type="text"
+            class="form-control"
+            id="endereco_num"
+            placeholder="Endereço Número"
+          />
+        </div>
+
+        <div class="mb-3" id="endereco_obs-field">
+          <label for="endereco_obs" class="form-label"
+            >Endereço (Observação)</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            id="endereco_obs"
+            placeholder="Observação"
+          />
+        </div>
+
+        <div class="mb-3" id="apelido-field">
+          <label for="apelido" class="form-label">Apelido</label>
+          <input
+            type="text"
+            class="form-control"
+            id="apelido"
+            placeholder="Apelido"
+          />
+        </div>
+
+        <div class="mb-3" id="estado_civil-field">
+          <label for="estado_civil" class="form-label">Estado Civil</label>
+          <input
+            type="text"
+            class="form-control"
+            id="estado_civil"
+            placeholder="Estado Civil"
+          />
+        </div>
+
+        <!-- Botões de controle -->
+        <button type="submit" class="btn btn-primary" id="submitButton">
+          Cadastrar Sócio
+        </button>
+        <button id="hideFormButton" class="btn btn-secondary" type="button">
+          Cancelar
+        </button>
+      </form>
+
+      <!-- Campo de Filtro -->
+      <input
+        type="text"
+        id="filterInput"
+        class="form-control mb-3"
+        placeholder="Filtrar Sócios"
+      />
+
+      <div class="container" id="colunas">
+        <h1 id="toggleColumnsButton">Exibir/Ocultar Colunas da Tabela</h1>
+
+        <!-- Checkboxes para selecionar colunas -->
+        <div class="checkbox-columns" id="colunas1">
+          <div class="checkbox-column">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="nome"
+                id="checkNome"
+                checked
+              />
+              <label class="form-check-label" for="checkNome">Nome</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="cpf"
+                id="checkCPF"
+                checked
+              />
+              <label class="form-check-label" for="checkCPF">CPF</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="data_nascimento"
+                id="checkNascimento"
+              />
+              <label class="form-check-label" for="checkNascimento"
+                >Data de Nascimento</label
+              >
+            </div>
+
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="email"
+                id="checkEmail"
+                checked
+              />
+              <label class="form-check-label" for="checkEmail">Email</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="telefone"
+                id="checkTelefone"
+                checked
+              />
+              <label class="form-check-label" for="checkTelefone"
+                >Telefone</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="matricula"
+                id="checkMatricula"
+                checked
+              />
+              <label class="form-check-label" for="checkMatricula"
+                >Matrícula</label
+              >
+            </div>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="EnderecoRua" id="checkEnderecoRua" >
-            <label class="form-check-label" for="checkEnderecoRua">Endereço (Rua)</label>
+
+          <div class="checkbox-column">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="Aposentado"
+                id="checkAposentado"
+              />
+              <label class="form-check-label" for="checkAposentado"
+                >Aposentado</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="GrupoWhats"
+                id="checkGrupoWhats"
+              />
+              <label class="form-check-label" for="checkGrupoWhats"
+                >Grupo WhatsApp</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="Cargo"
+                id="checkCargo"
+              />
+              <label class="form-check-label" for="checkCargo">Cargo</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="DataAdmissao"
+                id="checkDataAdmissao"
+              />
+              <label class="form-check-label" for="checkDataAdmissao"
+                >Data de Admissão</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="DataDesligamento"
+                id="checkDataDesligamento"
+              />
+              <label class="form-check-label" for="checkDataDesligamento"
+                >Data de Desligamento</label
+              >
+            </div>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="EnderecoNum" id="checkEnderecoNum" >
-            <label class="form-check-label" for="checkEnderecoNum">Endereço (Número)</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="EnderecoObs" id="checkEnderecoObs" >
-            <label class="form-check-label" for="checkEnderecoObs">Endereço (Observação)</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="Apelido" id="checkApelido" >
-            <label class="form-check-label" for="checkApelido">Apelido</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="EstadoCivil" id="checkEstadoCivil">
-            <label class="form-check-label" for="checkEstadoCivil">Estado Civil</label>
+
+          <div class="checkbox-column">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="DataAssociacao"
+                id="checkDataAssociacao"
+              />
+              <label class="form-check-label" for="checkDataAssociacao"
+                >Data de Associação</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="EnderecoRua"
+                id="checkEnderecoRua"
+              />
+              <label class="form-check-label" for="checkEnderecoRua"
+                >Endereço (Rua)</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="EnderecoNum"
+                id="checkEnderecoNum"
+              />
+              <label class="form-check-label" for="checkEnderecoNum"
+                >Endereço (Número)</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="EnderecoObs"
+                id="checkEnderecoObs"
+              />
+              <label class="form-check-label" for="checkEnderecoObs"
+                >Endereço (Observação)</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="Apelido"
+                id="checkApelido"
+              />
+              <label class="form-check-label" for="checkApelido">Apelido</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                value="EstadoCivil"
+                id="checkEstadoCivil"
+              />
+              <label class="form-check-label" for="checkEstadoCivil"
+                >Estado Civil</label
+              >
+            </div>
           </div>
         </div>
       </div>
-    </div>  
-    <!-- Tabela de Sócios -->
-    <h2>Lista de Sócios</h2>
-    <table class="table table-striped" id="sociosTable">
-      <thead>
-        <tr>
-          <th scope="col">Ações</th>
-          <th data-type="string" class="col-nome">Nome</th>
-          <th data-type="string" class="col-cpf">CPF</th>
-          <th data-type="Date" class="col-data_nascimento">Data de Nascimento</th>
-          <th data-type="string" class="col-email">Email</th>
-          <th data-type="number" class="col-telefone">Telefone</th>
-          <th data-type="number" class="col-matricula">Matrícula</th>
-          <th data-type="string" class="col-Aposentado">Aposentado</th>
-          <th data-type="string" class="col-GrupoWhats">Grupo WhatsApp</th>
-          <th data-type="string" class="col-Cargo">Cargo</th>
-          <th data-type="Date" class="col-DataAdmissao">Data de Admissão</th>
-          <th data-type="date" class="col-DataDesligamento">Data de Desligamento</th>
-          <th data-type="date" class="col-DataAssociacao">Data de Associação</th>
-          <th data-type="string" class="col-EnderecoRua">Endereço (Rua)</th>
-          <th data-type="number" class="col-EnderecoNum">Endereço (Número)</th>
-          <th class="col-EnderecoObs">Endereço (Observação)</th>
-          <th data-type="string" class="col-Apelido">Apelido</th>
-          <th data-type="string" class="col-EstadoCivil">Estado Civil</th>
-        </tr>
-      </thead>
-      <tbody id="sociosList">
-        <!-- Lista de sócios será inserida aqui -->
-      </tbody>
-    </table>
-  
-    <!-- Paginação -->
-  <!-- <div class="pagination">
+      <!-- Tabela de Sócios -->
+      <h2>Lista de Sócios</h2>
+      <table class="table table-striped" id="sociosTable">
+        <thead>
+          <tr>
+            <th scope="col">Ações</th>
+            <th data-type="string" class="col-nome">Nome</th>
+            <th data-type="string" class="col-cpf">CPF</th>
+            <th data-type="Date" class="col-data_nascimento">
+              Data de Nascimento
+            </th>
+            <th data-type="string" class="col-email">Email</th>
+            <th data-type="number" class="col-telefone">Telefone</th>
+            <th data-type="number" class="col-matricula">Matrícula</th>
+            <th data-type="string" class="col-Aposentado">Aposentado</th>
+            <th data-type="string" class="col-GrupoWhats">Grupo WhatsApp</th>
+            <th data-type="string" class="col-Cargo">Cargo</th>
+            <th data-type="Date" class="col-DataAdmissao">Data de Admissão</th>
+            <th data-type="date" class="col-DataDesligamento">
+              Data de Desligamento
+            </th>
+            <th data-type="date" class="col-DataAssociacao">
+              Data de Associação
+            </th>
+            <th data-type="string" class="col-EnderecoRua">Endereço (Rua)</th>
+            <th data-type="number" class="col-EnderecoNum">
+              Endereço (Número)
+            </th>
+            <th class="col-EnderecoObs">Endereço (Observação)</th>
+            <th data-type="string" class="col-Apelido">Apelido</th>
+            <th data-type="string" class="col-EstadoCivil">Estado Civil</th>
+          </tr>
+        </thead>
+        <tbody id="sociosList">
+          <!-- Lista de sócios será inserida aqui -->
+        </tbody>
+      </table>
+
+      <!-- Paginação -->
+      <!-- <div class="pagination">
     <button id="prevPage" class="btn btn-primary btn-sm"><i class="fas fa-chevron-left"></i></button>
     <span id="pageInfo"></span>
     <button id="nextPage" class="btn btn-primary btn-sm"><i class="fas fa-chevron-right"></i>
     </button>
   </div>-->
+    </div>
 
-  </div>
+    <div class="container">
+      <!-- Botão de Logout -->
+      <button id="logoutButton" class="btn btn-danger btn-sm">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </div>
 
-  <div class="container">
-    <!-- Botão de Logout -->
-    <button id="logoutButton" class="btn btn-danger btn-sm"><i class="fas fa-sign-out-alt"></i></button>
-  </div>
+    <!-- Seção de Dependentes (oculta inicialmente) -->
+    <div id="dependentesSection" style="display: none">
+      <h2>Dependentes</h2>
+      <button class="btn btn-success btn-sm" onclick="novoDependente()">
+        <i class="fas fa-plus-circle"></i>
+      </button>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col">Nome</th>
+            <th scope="col">Parentesco</th>
+            <th scope="col">Data de Nascimento</th>
+            <th scope="col">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="dependentesList">
+          <!-- Lista de dependentes será inserida aqui -->
+        </tbody>
+      </table>
+      <button class="btn btn-secondary" onclick="goBackToSocios()">
+        Voltar para Sócios
+      </button>
+    </div>
 
-<!-- Seção de Dependentes (oculta inicialmente) -->
-<div id="dependentesSection" style="display: none;">
-  <h2>Dependentes</h2>
-  <button class="btn btn-success btn-sm" onclick="novoDependente()"><i class="fas fa-plus-circle"></i>
-  </button>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th scope="col">Nome</th>
-        <th scope="col">Parentesco</th>
-        <th scope="col">Data de Nascimento</th>
-        <th scope="col">Ações</th>
-      </tr>
-    </thead>
-    <tbody id="dependentesList">
-      <!-- Lista de dependentes será inserida aqui -->
-    </tbody>
-  </table>
-  <button class="btn btn-secondary" onclick="goBackToSocios()">Voltar para Sócios</button>
-</div>
-  
-<!-- Bootstrap JS and Popper.js -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- JavaScript para interagir com a API -->
-  <script>
-      window.onload = function() {
-        const isLoggedIn = sessionStorage.getItem('loggedIn');
-        
+    <!-- JavaScript para interagir com a API -->
+    <script>
+      const baseUrl = window.location.origin;
+
+      window.onload = function () {
+        const isLoggedIn = sessionStorage.getItem("loggedIn");
+
         // Se não estiver autenticado, redireciona para a página de login
         if (!isLoggedIn) {
-          window.location.href = '/login.html';
+          window.location.href = "/login.html";
         }
-      }
-    const baseUrl = `http://${window.location.hostname || 'localhost'}:3000`;
+      };
+      //const baseUrl = `http://${window.location.hostname || 'localhost'}:3000`;
 
-    document.getElementById('sociosForm').addEventListener('submit', handleFormSubmit);
+      document
+        .getElementById("sociosForm")
+        .addEventListener("submit", handleFormSubmit);
 
-    let currentContext = 'socio'; // Pode ser 'socio' ou 'dependente'
+      let currentContext = "socio"; // Pode ser 'socio' ou 'dependente'
 
-    //let currentPage = 1; // Página inicial
-    //const limit = 10; // Número de sócios por página
+      //let currentPage = 1; // Página inicial
+      //const limit = 10; // Número de sócios por página
 
-    const form = document.getElementById('sociosForm');
-    const showFormButton = document.getElementById('showFormButton');
-    const hideFormButton = document.getElementById('hideFormButton');
-    const submitButton = document.getElementById('submitButton');
-    const sociosList = document.getElementById('sociosList');
-    const filterInput = document.getElementById('filterInput');
-    let isEditing = false; // Variável para verificar se estamos editando ou criando novo sócio
-    let currentSocioId = null; // Armazena o ID do sócio atual que está sendo editado
+      const form = document.getElementById("sociosForm");
+      const showFormButton = document.getElementById("showFormButton");
+      const hideFormButton = document.getElementById("hideFormButton");
+      const submitButton = document.getElementById("submitButton");
+      const sociosList = document.getElementById("sociosList");
+      const filterInput = document.getElementById("filterInput");
+      let isEditing = false; // Variável para verificar se estamos editando ou criando novo sócio
+      let currentSocioId = null; // Armazena o ID do sócio atual que está sendo editado
 
-// Função para alternar a visibilidade da div
-document.getElementById('toggleColumnsButton').addEventListener('click', function() {
-  const checkboxDiv = document.getElementById('colunas1');
+      // Função para alternar a visibilidade da div
+      document
+        .getElementById("toggleColumnsButton")
+        .addEventListener("click", function () {
+          const checkboxDiv = document.getElementById("colunas1");
 
-  if (checkboxDiv.style.display === 'none' || checkboxDiv.style.display === '') {
-    checkboxDiv.style.display = 'flex'; // Exibe a div
-  } else {
-    checkboxDiv.style.display = 'none'; // Oculta a div
-  }
-});
-
-    
-  // Função para preencher o campo select com os cargos
-  function loadCargos() {
-    fetch(`http://${window.location.hostname}:3000/cargos`)
-      .then(response => response.json())
-      .then(cargos => {
-        const selectCargo = document.getElementById('cargo');
-        selectCargo.innerHTML = ''; // Limpa qualquer opção existente
-
-        cargos.forEach(cargo => {
-          const option = document.createElement('option');
-          option.value = cargo.idCargo;  // Valor do cargo (ID)
-          option.textContent = cargo.nome;  // Nome do cargo
-          selectCargo.appendChild(option);
-        });
-      })
-      .catch(err => console.error('Erro ao carregar cargos:', err));
-  }
-    function toggleColumn(checkbox, columnClass) {
-      const columnElements = document.querySelectorAll(`.${columnClass}`);
-      columnElements.forEach(el => {
-        if (checkbox.checked) {
-          el.style.display = 'block'; // Exibe a coluna
-        } else {
-          el.style.display = 'none'; // Oculta a coluna
-        }
-      });
-    }
-
-    // Manipuladores de eventos para os checkboxes
-    document.querySelectorAll('.form-check-input').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        toggleColumn(this, `col-${this.value}`);
-      });
-    });
-
-    // Exibir o formulário ao clicar no botão "Novo Sócio"
-    showFormButton.addEventListener('click', () => {
-      toggleParentescoField(); 
-      form.style.display = 'block'; // Exibe o formulário
-      currentContext = 'socio'; // Define o contexto para sócios
-      showFormButton.style.display = 'none'; // Oculta o botão "Novo Sócio"
-      submitButton.textContent = 'Cadastrar Sócio'; // Define o texto do botão como "Cadastrar Sócio"
-      isEditing = false; // Define que estamos criando um novo sócio, não editando
-      currentSocioId = null; // Reseta o ID do sócio
-    });
-
-    // Ocultar o formulário ao clicar no botão "Cancelar"
-    hideFormButton.addEventListener('click', () => {
-      form.style.display = 'none'; // Oculta o formulário
-      showFormButton.style.display = 'inline-block'; // Mostra o botão "Novo Sócio" novamente
-      form.reset(); // Reseta o formulário
-    });
-
-  document.getElementById('logoutButton').addEventListener('click', function() {
-      // Remove a flag de autenticação do sessionStorage
-      sessionStorage.removeItem('loggedIn');
-      
-      // Faz a requisição para destruir a sessão no backend
-      fetch('http://localhost:3000/logout', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Redireciona o usuário para a página de login
-            window.location.href = '/login.html';
+          if (
+            checkboxDiv.style.display === "none" ||
+            checkboxDiv.style.display === ""
+          ) {
+            checkboxDiv.style.display = "flex"; // Exibe a div
+          } else {
+            checkboxDiv.style.display = "none"; // Oculta a div
           }
-        })
-        .catch(err => console.error('Erro ao fazer logout:', err));
-    });
+        });
 
- function toggleParentescoField() {
-  const parentescoField = document.getElementById('parentesco-field');
-  console.log(currentContext);
-  if (currentContext === 'dependente') {
-    parentescoField.style.display = 'block'; // Mostra o campo de parentesco
-    document.getElementById('matricula-field').style.display = 'none';    
-    document.getElementById('aposentado-field').style.display = 'none';    
-    document.getElementById('grupoWhats-field').style.display = 'none';
-    document.getElementById('cargo-field').style.display = 'none';
-    document.getElementById('data_admissao-field').style.display = 'none';
-    document.getElementById('data_associacao-field').style.display = 'none';
-    document.getElementById('endereco_rua-field').style.display = 'none';
-    document.getElementById('endereco_num-field').style.display = 'none';
-    document.getElementById('endereco_obs-field').style.display = 'none';
-    document.getElementById('apelido-field').style.display = 'none';
-    document.getElementById('data_admissao-field').style.display = 'none';
-    document.getElementById('estado_civil-field').style.display = 'none';
-    
-  } else {
-    parentescoField.style.display = 'none'; // Oculta o campo de parentesco
-  }
-}
+      // Função para preencher o campo select com os cargos
+      function loadCargos() {
+        fetch(`${baseUrl}/cargos`)
+          .then((response) => response.json())
+          .then((cargos) => {
+            const selectCargo = document.getElementById("cargo");
+            selectCargo.innerHTML = ""; // Limpa qualquer opção existente
 
-// Submeter o formulário
-function handleFormSubmit(e) {
-  e.preventDefault();
-  console.log('Form submitted'); // Verifica se a função está sendo chamada
-  
-  // Pegando os valores dos campos
-  const nome = document.getElementById('nome').value;
-  const cpf = document.getElementById('cpf').value;
-  const data_nascimento = document.getElementById('data_nascimento').value;
-  const parentesco = document.getElementById('parentesco').value;
-  const email = document.getElementById('email').value;
-  const telefone = document.getElementById('telefone').value;
-  const matricula = document.getElementById('matricula').value;
-  const aposentado = document.getElementById('aposentado').value;
-  const grupoWhats = document.getElementById('grupoWhats').value;
-  const cargo = document.getElementById('cargo').value;
-  const dataadmissao = document.getElementById('data_admissao').value;
-  const dataassociacao = document.getElementById('data_associacao').value;
-  const enderecorua = document.getElementById('endereco_rua').value;
-  const endereconum = document.getElementById('endereco_num').value;
-  const enderecoobs = document.getElementById('endereco_obs').value;
-  const apelido = document.getElementById('apelido').value;
-  const estadocivil = document.getElementById('estado_civil').value;
+            cargos.forEach((cargo) => {
+              const option = document.createElement("option");
+              option.value = cargo.idCargo; // Valor do cargo (ID)
+              option.textContent = cargo.nome; // Nome do cargo
+              selectCargo.appendChild(option);
+            });
+          })
+          .catch((err) => console.error("Erro ao carregar cargos:", err));
+      }
+      function toggleColumn(checkbox, columnClass) {
+        const columnElements = document.querySelectorAll(`.${columnClass}`);
+        columnElements.forEach((el) => {
+          if (checkbox.checked) {
+            el.style.display = "block"; // Exibe a coluna
+          } else {
+            el.style.display = "none"; // Oculta a coluna
+          }
+        });
+      }
 
-  // Dados que serão enviados no body da requisição
-  const socioData = {
-    nome,
-    cpf,
-    data_nascimento,
-    parentesco,
-    email,
-    telefone,
-    matricula,
-    aposentado,
-    grupoWhats,
-    cargo,
-    dataadmissao,
-    dataassociacao,
-    enderecorua,
-    endereconum,
-    enderecoobs,
-    apelido,
-    estadocivil,
-  };
+      // Manipuladores de eventos para os checkboxes
+      document.querySelectorAll(".form-check-input").forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          toggleColumn(this, `col-${this.value}`);
+        });
+      });
 
-  // Verifica se estamos lidando com um sócio ou dependente
-  if (currentContext === 'socio') {
-    if (isEditing) {
-      // Editar sócio
-      fetch(`http://${window.location.hostname}:3000/socios/${currentSocioId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(socioData)
-      })
-      .then(response => response.text())
-      .then(data => {
-        alert(data);
-        form.reset(); // Limpa o formulário após o envio
-        form.style.display = 'none'; // Oculta o formulário após editar
-        showFormButton.style.display = 'inline-block'; // Mostra o botão "Novo Sócio" novamente
-        loadSocios(); // Atualiza a lista de sócios
-        isEditing = false; // Reseta o estado de edição
+      // Exibir o formulário ao clicar no botão "Novo Sócio"
+      showFormButton.addEventListener("click", () => {
+        toggleParentescoField();
+        form.style.display = "block"; // Exibe o formulário
+        currentContext = "socio"; // Define o contexto para sócios
+        showFormButton.style.display = "none"; // Oculta o botão "Novo Sócio"
+        submitButton.textContent = "Cadastrar Sócio"; // Define o texto do botão como "Cadastrar Sócio"
+        isEditing = false; // Define que estamos criando um novo sócio, não editando
         currentSocioId = null; // Reseta o ID do sócio
       });
-    } else {
-      // Cadastrar sócio
-      fetch(`http://${window.location.hostname}:3000/socios`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(socioData)
-      })
-      .then(response => response.text())
-      .then(data => {
-        console.log(socioData);
-        alert(data);
-        form.reset(); // Limpa o formulário após o envio
-        form.style.display = 'none'; // Oculta o formulário após cadastrar
-        showFormButton.style.display = 'inline-block'; // Mostra o botão "Novo Sócio" novamente
-        loadSocios(); // Atualiza a lista de sócios
-      });
-    }
-  } else if (currentContext === 'dependente') {
-    if (isEditing) {
-      // Editar dependente
-      fetch(`http://${window.location.hostname}:3000/socios/${currentDependenteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ nome, cpf, data_nascimento, parentesco })
-      })
-      .then(response => response.text())
-      .then(data => {
-        alert(data);
-        form.reset(); // Limpa o formulário após o envio
-        form.style.display = 'none'; // Oculta o formulário após editar
-        showDependentes(currentSocioId); // Atualiza a lista de dependentes
-      });
-    } else {
-      // Cadastrar dependente
-      fetch(`http://${window.location.hostname}:3000/socios`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          nome: nome,
-          cpf: cpf,
-          data_nascimento: data_nascimento,
-          parentesco: parentesco,
-          socio: currentSocioId // Garante que o ID do sócio seja enviado
-        })
-      })
-      .then(response => response.text())
-      .then(data => {
-        alert("Dependente: " + data);
-        form.reset(); // Limpa o formulário após o envio
-        form.style.display = 'none'; // Oculta o formulário após cadastrar
-        showDependentes(currentSocioId); // Atualiza a lista de dependentes
-      });
-    }
-  }
-}
 
+      // Ocultar o formulário ao clicar no botão "Cancelar"
+      hideFormButton.addEventListener("click", () => {
+        form.style.display = "none"; // Oculta o formulário
+        showFormButton.style.display = "inline-block"; // Mostra o botão "Novo Sócio" novamente
+        form.reset(); // Reseta o formulário
+      });
 
-function loadSocios(page = 1) {
-      fetch(`${baseUrl}/socios`)
-        .then(response => response.json())
-        .then(data => {
-          sociosList.innerHTML = '';
-          data.socios.forEach(socio => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+      document
+        .getElementById("logoutButton")
+        .addEventListener("click", function () {
+          // Remove a flag de autenticação do sessionStorage
+          sessionStorage.removeItem("loggedIn");
+
+          // Faz a requisição para destruir a sessão no backend
+          fetch(`${baseUrl}/logout`, { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                // Redireciona o usuário para a página de login
+                window.location.href = "/login.html";
+              }
+            })
+            .catch((err) => console.error("Erro ao fazer logout:", err));
+        });
+
+      function toggleParentescoField() {
+        const parentescoField = document.getElementById("parentesco-field");
+        console.log(currentContext);
+        if (currentContext === "dependente") {
+          parentescoField.style.display = "block"; // Mostra o campo de parentesco
+          document.getElementById("matricula-field").style.display = "none";
+          document.getElementById("aposentado-field").style.display = "none";
+          document.getElementById("grupoWhats-field").style.display = "none";
+          document.getElementById("cargo-field").style.display = "none";
+          document.getElementById("data_admissao-field").style.display = "none";
+          document.getElementById("data_associacao-field").style.display =
+            "none";
+          document.getElementById("endereco_rua-field").style.display = "none";
+          document.getElementById("endereco_num-field").style.display = "none";
+          document.getElementById("endereco_obs-field").style.display = "none";
+          document.getElementById("apelido-field").style.display = "none";
+          document.getElementById("data_admissao-field").style.display = "none";
+          document.getElementById("estado_civil-field").style.display = "none";
+        } else {
+          parentescoField.style.display = "none"; // Oculta o campo de parentesco
+        }
+      }
+
+      // Submeter o formulário
+      function handleFormSubmit(e) {
+        e.preventDefault();
+        console.log("Form submitted"); // Verifica se a função está sendo chamada
+
+        // Pegando os valores dos campos
+        const nome = document.getElementById("nome").value;
+        const cpf = document.getElementById("cpf").value;
+        const data_nascimento =
+          document.getElementById("data_nascimento").value;
+        const parentesco = document.getElementById("parentesco").value;
+        const email = document.getElementById("email").value;
+        const telefone = document.getElementById("telefone").value;
+        const matricula = document.getElementById("matricula").value;
+        const aposentado = document.getElementById("aposentado").value;
+        const grupoWhats = document.getElementById("grupoWhats").value;
+        const cargo = document.getElementById("cargo").value;
+        const dataadmissao = document.getElementById("data_admissao").value;
+        const dataassociacao = document.getElementById("data_associacao").value;
+        const enderecorua = document.getElementById("endereco_rua").value;
+        const endereconum = document.getElementById("endereco_num").value;
+        const enderecoobs = document.getElementById("endereco_obs").value;
+        const apelido = document.getElementById("apelido").value;
+        const estadocivil = document.getElementById("estado_civil").value;
+
+        // Dados que serão enviados no body da requisição
+        const socioData = {
+          nome,
+          cpf,
+          data_nascimento,
+          parentesco,
+          email,
+          telefone,
+          matricula,
+          aposentado,
+          grupoWhats,
+          cargo,
+          dataadmissao,
+          dataassociacao,
+          enderecorua,
+          endereconum,
+          enderecoobs,
+          apelido,
+          estadocivil,
+        };
+
+        // Verifica se estamos lidando com um sócio ou dependente
+        if (currentContext === "socio") {
+          if (isEditing) {
+            // Editar sócio
+            fetch(
+              `${baseUrl}/socios/${currentSocioId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(socioData),
+              },
+            )
+              .then((response) => response.text())
+              .then((data) => {
+                alert(data);
+                form.reset(); // Limpa o formulário após o envio
+                form.style.display = "none"; // Oculta o formulário após editar
+                showFormButton.style.display = "inline-block"; // Mostra o botão "Novo Sócio" novamente
+                loadSocios(); // Atualiza a lista de sócios
+                isEditing = false; // Reseta o estado de edição
+                currentSocioId = null; // Reseta o ID do sócio
+              });
+          } else {
+            // Cadastrar sócio
+            fetch(`${baseUrl}/socios`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(socioData),
+            })
+              .then((response) => response.text())
+              .then((data) => {
+                console.log(socioData);
+                alert(data);
+                form.reset(); // Limpa o formulário após o envio
+                form.style.display = "none"; // Oculta o formulário após cadastrar
+                showFormButton.style.display = "inline-block"; // Mostra o botão "Novo Sócio" novamente
+                loadSocios(); // Atualiza a lista de sócios
+              });
+          }
+        } else if (currentContext === "dependente") {
+          if (isEditing) {
+            // Editar dependente
+            fetch(
+              `${baseUrl}/socios/${currentDependenteId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  nome,
+                  cpf,
+                  data_nascimento,
+                  parentesco,
+                }),
+              },
+            )
+              .then((response) => response.text())
+              .then((data) => {
+                alert(data);
+                form.reset(); // Limpa o formulário após o envio
+                form.style.display = "none"; // Oculta o formulário após editar
+                showDependentes(currentSocioId); // Atualiza a lista de dependentes
+              });
+          } else {
+            // Cadastrar dependente
+            fetch(`${baseUrl}/socios`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                nome: nome,
+                cpf: cpf,
+                data_nascimento: data_nascimento,
+                parentesco: parentesco,
+                socio: currentSocioId, // Garante que o ID do sócio seja enviado
+              }),
+            })
+              .then((response) => response.text())
+              .then((data) => {
+                alert("Dependente: " + data);
+                form.reset(); // Limpa o formulário após o envio
+                form.style.display = "none"; // Oculta o formulário após cadastrar
+                showDependentes(currentSocioId); // Atualiza a lista de dependentes
+              });
+          }
+        }
+      }
+
+      function loadSocios(page = 1) {
+        fetch(`${baseUrl}/socios`)
+          .then((response) => response.json())
+          .then((data) => {
+            sociosList.innerHTML = "";
+            data.socios.forEach((socio) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
             <td class="action-btns">
                 <button class="btn btn-warning btn-sm" onclick="editSocio(${socio.id})">
                   <i class="fas fa-edit"></i> <!-- Ícone de Editar -->
@@ -682,75 +924,72 @@ function loadSocios(page = 1) {
               <td class="col-EstadoCivil">${socio.estadocivil}</td>
               
             `;
-            sociosList.appendChild(tr);
+              sociosList.appendChild(tr);
+            });
+            filterSocios(); // Aplica o filtro ao carregar os sócios
+            // Atualiza a informação da página
+            //document.getElementById('pageInfo').innerText = `Página ${data.page} de ${data.totalPages}`;
 
-          });
-          filterSocios(); // Aplica o filtro ao carregar os sócios
-          // Atualiza a informação da página
-          //document.getElementById('pageInfo').innerText = `Página ${data.page} de ${data.totalPages}`;
+            // Atualiza os botões de paginação
+            //document.getElementById('prevPage').disabled = data.page === 1;
+            //document.getElementById('nextPage').disabled = data.page === data.totalPages;
 
-          // Atualiza os botões de paginação
-          //document.getElementById('prevPage').disabled = data.page === 1;
-          //document.getElementById('nextPage').disabled = data.page === data.totalPages;
+            // Atualiza o número da página atual
+            //currentPage = data.page;
+          })
+          .catch((err) => console.error("Erro ao carregar os sócios:", err));
+      }
 
-          // Atualiza o número da página atual
-          //currentPage = data.page;
-
-        })
-        .catch(err => console.error('Erro ao carregar os sócios:', err));
-    }
-
-    // Botões de navegação
-    /*document.getElementById('prevPage').addEventListener('click', () => {
+      // Botões de navegação
+      /*document.getElementById('prevPage').addEventListener('click', () => {
       if (currentPage > 1) {
         loadSocios(currentPage - 1);
       }
     });*/
 
-    /*document.getElementById('nextPage').addEventListener('click', () => {
+      /*document.getElementById('nextPage').addEventListener('click', () => {
       loadSocios(currentPage + 1);
     });*/
 
-    function deleteSocio(id) {
-      if (confirm('Tem certeza que deseja excluir este sócio?')) {
-        fetch(`http://localhost:3000/socios/${id}`, {
-          method: 'DELETE'
-        })
-        .then(response => response.text())
-        .then(data => {
-          alert(data);
-          loadSocios(); // Atualiza a lista de sócios após a exclusão
-        });
+      function deleteSocio(id) {
+        if (confirm("Tem certeza que deseja excluir este sócio?")) {
+          fetch(`${baseUrl}/socios/${id}`, {
+            method: "DELETE",
+          })
+            .then((response) => response.text())
+            .then((data) => {
+              alert(data);
+              loadSocios(); // Atualiza a lista de sócios após a exclusão
+            });
+        }
       }
-    }
 
-function showDependentes(socioId) {
- 
-  currentSocioId = socioId;
-  console.log("Current Socio ID:", currentSocioId); 
-  currentContext = "dependente";
-  currentContext = 'dependente';
-  toggleParentescoField();
-  // Esconde a tabela de sócios e o formulário de sócios
-  document.getElementById('sociosTable').style.display = 'none';
-  document.getElementById('sociosForm').style.display = 'none';
-  document.getElementById('showFormButton').style.display = 'none';
-  document.getElementById('filterInput').style.display = 'none';
-  document.querySelector('h2').style.display = 'none'; // Oculta o título da lista de sócios
+      function showDependentes(socioId) {
+        currentSocioId = socioId;
+        console.log("Current Socio ID:", currentSocioId);
+        currentContext = "dependente";
+        currentContext = "dependente";
+        toggleParentescoField();
+        // Esconde a tabela de sócios e o formulário de sócios
+        document.getElementById("sociosTable").style.display = "none";
+        document.getElementById("sociosForm").style.display = "none";
+        document.getElementById("showFormButton").style.display = "none";
+        document.getElementById("filterInput").style.display = "none";
+        document.querySelector("h2").style.display = "none"; // Oculta o título da lista de sócios
 
-  // Mostra a seção de dependentes
-  document.getElementById('dependentesSection').style.display = 'block';
+        // Mostra a seção de dependentes
+        document.getElementById("dependentesSection").style.display = "block";
 
-  // Carrega os dependentes do sócio
-  fetch(`http://${window.location.hostname}:3000/socios/${socioId}/dependentes`)
-    .then(response => response.json())
-    .then(dependentes => {
-      const dependentesList = document.getElementById('dependentesList');
-      dependentesList.innerHTML = ''; // Limpa a lista anterior
+        // Carrega os dependentes do sócio
+        fetch(`${baseUrl}/socios/${socioId}/dependentes`)
+          .then((response) => response.json())
+          .then((dependentes) => {
+            const dependentesList = document.getElementById("dependentesList");
+            dependentesList.innerHTML = ""; // Limpa a lista anterior
 
-      dependentes.forEach(dependente => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+            dependentes.forEach((dependente) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
           <td>${dependente.nome}</td>
           <td>${dependente.parentesco}</td>
           <td>${dependente.data_nascimento}</td>
@@ -761,194 +1000,230 @@ function showDependentes(socioId) {
             <button class="btn btn-danger btn-sm" onclick="deleteDependente(${dependente.id})"><i class="fas fa-trash"></i></button>
           </td>
         `;
-        dependentesList.appendChild(tr);
-      });
-    });
-}
-
-function editDependente(dependenteId, socioId) {
-  fetch(`http://${window.location.hostname}:3000/socios/${dependenteId}`)
-    .then(response => response.json())
-    .then(dependenteArray => {
-      const dependente = dependenteArray[0]; // Acessa o primeiro (e único) item do array
-      console.log(dependente); // Verifica o conteúdo do objeto
-      // Preenche o formulário com os dados do dependente para edição
-      document.getElementById('nome').value = dependente.nome || '';
-      document.getElementById('cpf').value = dependente.cpf || '';
-      document.getElementById('data_nascimento').value = dependente.data_nascimento ? dependente.data_nascimento.split('T')[0] : '';
-      document.getElementById('parentesco').value = dependente.parentesco || '';
-
-      // Exibe o formulário e define o estado para edição
-      form.style.display = 'block';
-      toggleParentescoField(); 
-      showFormButton.style.display = 'none';
-      submitButton.textContent = 'Salvar Alterações'; // Altera o texto do botão
-      isEditing = true; // Muda o estado para edição
-      currentSocioId = socioId; // Armazena o ID do sócio
-      currentDependenteId = dependenteId; // Armazena o ID do dependente
-    })
-    .catch(error => {
-      console.error('Erro ao buscar dependente:', error);
-    });
-}
-
-function deleteDependente(dependenteId) {
-  if (confirm('Tem certeza que deseja excluir este dependente?')) {
-    fetch(`http://${window.location.hostname}:3000/socios/${dependenteId}`, {
-      method: 'DELETE'
-    })
-    .then(response => response.text())
-    .then(data => {
-      alert(data);
-      // Recarrega os dependentes do sócio após a exclusão
-      const socioId = currentSocioId;
-      showDependentes(socioId); // Atualiza a lista de dependentes
-    });
-  }
-}
-
-function novoDependente() {
-  toggleParentescoField(); 
-  form.style.display = 'block'; // Exibe o formulário
-  currentContext = 'dependente'; // Define o contexto para sócios
-  showFormButton.style.display = 'none'; // Oculta o botão "Novo Sócio"
-  submitButton.textContent = 'Cadastrar Dependente'; // Altera o texto do botão
-  isEditing = false; // Define que estamos criando um novo dependente
-  currentDependenteId = null; // Reseta o ID do dependente
-}
-
-
-function goBackToSocios() {
-  // Esconde a seção de dependentes
-  currentContext = 'socio'; 
-  document.getElementById('dependentesSection').style.display = 'none';
-
-  // Mostra a tabela de sócios e o botão de novo sócio
-  document.getElementById('sociosTable').style.display = 'table';
-  document.getElementById('showFormButton').style.display = 'inline-block';
-  document.getElementById('filterInput').style.display = 'inline-block';
-}
-
-function editSocio(id) {
-  toggleParentescoField();
-  fetch(`http://${window.location.hostname}:3000/socios/${id}`)
-    .then(response => response.json())
-    .then(socioArray => {
-      const socio = socioArray[0]; // Acessa o primeiro (e único) item do array
-      console.log(socio); // Verifica o conteúdo do objeto
-
-      // Preenche o formulário com os dados do sócio para edição
-      document.getElementById('nome').value = socio.nome || ''; // Garante que o valor seja string ou vazio
-      document.getElementById('cpf').value = socio.cpf || '';
-      
-      // Verifica se data_nascimento existe antes de tentar formatar
-      if (socio.data_nascimento) {
-        document.getElementById('data_nascimento').value = socio.data_nascimento.split('T')[0];
-      } else {
-        document.getElementById('data_nascimento').value = ''; // Deixa o campo em branco se não houver data
+              dependentesList.appendChild(tr);
+            });
+          });
       }
-      
-      
-      // Exibe o formulário e define o estado para edição
-      form.style.display = 'block';
-      showFormButton.style.display = 'none';
-      submitButton.textContent = 'Salvar Alterações'; // Altera o texto do botão
-      isEditing = true; // Muda o estado para edição
-      currentSocioId = id; // Armazena o ID do sócio que está sendo editado
-    })
-    .catch(error => {
-      console.error('Erro ao buscar sócio:', error);
-    });
-}
 
-    // Função para filtrar os sócios
-    function filterSocios() {
-      const filterValue = filterInput.value.toLowerCase();
-      const rows = document.querySelectorAll('#sociosList tr');
-      rows.forEach(row => {
-        const nome = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-        const cpf = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-        const dataNascimento = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-        const email = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-        const telefone = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
-        const matricula = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
-        const aposentado = row.querySelector('td:nth-child(7)').textContent.toLowerCase();
-        const grupoWhats = row.querySelector('td:nth-child(8)').textContent.toLowerCase();
-        const cargo = row.querySelector('td:nth-child(9)').textContent.toLowerCase();
-        const dataAdmissao = row.querySelector('td:nth-child(10)').textContent.toLowerCase();
-        const dataDesligamento = row.querySelector('td:nth-child(11)').textContent.toLowerCase();
-        const dataAssociacao = row.querySelector('td:nth-child(12)').textContent.toLowerCase();
-        const enderecoRua = row.querySelector('td:nth-child(13)').textContent.toLowerCase();
-        const enderecoNum = row.querySelector('td:nth-child(14)').textContent.toLowerCase();
-        const enderecoObs = row.querySelector('td:nth-child(15)').textContent.toLowerCase();
-        const apelido = row.querySelector('td:nth-child(16)').textContent.toLowerCase();
-        const estadoCivil = row.querySelector('td:nth-child(17)').textContent.toLowerCase();
+      function editDependente(dependenteId, socioId) {
+        fetch(`${baseUrl}/socios/${dependenteId}`)
+          .then((response) => response.json())
+          .then((dependenteArray) => {
+            const dependente = dependenteArray[0]; // Acessa o primeiro (e único) item do array
+            console.log(dependente); // Verifica o conteúdo do objeto
+            // Preenche o formulário com os dados do dependente para edição
+            document.getElementById("nome").value = dependente.nome || "";
+            document.getElementById("cpf").value = dependente.cpf || "";
+            document.getElementById("data_nascimento").value =
+              dependente.data_nascimento
+                ? dependente.data_nascimento.split("T")[0]
+                : "";
+            document.getElementById("parentesco").value =
+              dependente.parentesco || "";
 
-        if (
-          nome.includes(filterValue) || 
-          cpf.includes(filterValue) || 
-          dataNascimento.includes(filterValue) || 
-          email.includes(filterValue) || 
-          telefone.includes(filterValue) || 
-          matricula.includes(filterValue) || 
-          aposentado.includes(filterValue) || 
-          grupoWhats.includes(filterValue) || 
-          cargo.includes(filterValue) || 
-          dataAdmissao.includes(filterValue) || 
-          dataDesligamento.includes(filterValue) || 
-          dataAssociacao.includes(filterValue) || 
-          enderecoRua.includes(filterValue) || 
-          enderecoNum.includes(filterValue) || 
-          enderecoObs.includes(filterValue) || 
-          apelido.includes(filterValue) || 
-          estadoCivil.includes(filterValue)
-        ) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
+            // Exibe o formulário e define o estado para edição
+            form.style.display = "block";
+            toggleParentescoField();
+            showFormButton.style.display = "none";
+            submitButton.textContent = "Salvar Alterações"; // Altera o texto do botão
+            isEditing = true; // Muda o estado para edição
+            currentSocioId = socioId; // Armazena o ID do sócio
+            currentDependenteId = dependenteId; // Armazena o ID do dependente
+          })
+          .catch((error) => {
+            console.error("Erro ao buscar dependente:", error);
+          });
+      }
+
+      function deleteDependente(dependenteId) {
+        if (confirm("Tem certeza que deseja excluir este dependente?")) {
+          fetch(`${baseUrl}/socios/${dependenteId}`, {
+            method: "DELETE",
+          })
+            .then((response) => response.text())
+            .then((data) => {
+              alert(data);
+              // Recarrega os dependentes do sócio após a exclusão
+              const socioId = currentSocioId;
+              showDependentes(socioId); // Atualiza a lista de dependentes
+            });
         }
+      }
+
+      function novoDependente() {
+        toggleParentescoField();
+        form.style.display = "block"; // Exibe o formulário
+        currentContext = "dependente"; // Define o contexto para sócios
+        showFormButton.style.display = "none"; // Oculta o botão "Novo Sócio"
+        submitButton.textContent = "Cadastrar Dependente"; // Altera o texto do botão
+        isEditing = false; // Define que estamos criando um novo dependente
+        currentDependenteId = null; // Reseta o ID do dependente
+      }
+
+      function goBackToSocios() {
+        // Esconde a seção de dependentes
+        currentContext = "socio";
+        document.getElementById("dependentesSection").style.display = "none";
+
+        // Mostra a tabela de sócios e o botão de novo sócio
+        document.getElementById("sociosTable").style.display = "table";
+        document.getElementById("showFormButton").style.display =
+          "inline-block";
+        document.getElementById("filterInput").style.display = "inline-block";
+      }
+
+      function editSocio(id) {
+        toggleParentescoField();
+        fetch(`${baseUrl}/socios/${id}`)
+          .then((response) => response.json())
+          .then((socioArray) => {
+            const socio = socioArray[0]; // Acessa o primeiro (e único) item do array
+            console.log(socio); // Verifica o conteúdo do objeto
+
+            // Preenche o formulário com os dados do sócio para edição
+            document.getElementById("nome").value = socio.nome || ""; // Garante que o valor seja string ou vazio
+            document.getElementById("cpf").value = socio.cpf || "";
+
+            // Verifica se data_nascimento existe antes de tentar formatar
+            if (socio.data_nascimento) {
+              document.getElementById("data_nascimento").value =
+                socio.data_nascimento.split("T")[0];
+            } else {
+              document.getElementById("data_nascimento").value = ""; // Deixa o campo em branco se não houver data
+            }
+
+            // Exibe o formulário e define o estado para edição
+            form.style.display = "block";
+            showFormButton.style.display = "none";
+            submitButton.textContent = "Salvar Alterações"; // Altera o texto do botão
+            isEditing = true; // Muda o estado para edição
+            currentSocioId = id; // Armazena o ID do sócio que está sendo editado
+          })
+          .catch((error) => {
+            console.error("Erro ao buscar sócio:", error);
+          });
+      }
+
+      // Função para filtrar os sócios
+      function filterSocios() {
+        const filterValue = filterInput.value.toLowerCase();
+        const rows = document.querySelectorAll("#sociosList tr");
+        rows.forEach((row) => {
+          const nome = row
+            .querySelector("td:nth-child(1)")
+            .textContent.toLowerCase();
+          const cpf = row
+            .querySelector("td:nth-child(2)")
+            .textContent.toLowerCase();
+          const dataNascimento = row
+            .querySelector("td:nth-child(3)")
+            .textContent.toLowerCase();
+          const email = row
+            .querySelector("td:nth-child(4)")
+            .textContent.toLowerCase();
+          const telefone = row
+            .querySelector("td:nth-child(5)")
+            .textContent.toLowerCase();
+          const matricula = row
+            .querySelector("td:nth-child(6)")
+            .textContent.toLowerCase();
+          const aposentado = row
+            .querySelector("td:nth-child(7)")
+            .textContent.toLowerCase();
+          const grupoWhats = row
+            .querySelector("td:nth-child(8)")
+            .textContent.toLowerCase();
+          const cargo = row
+            .querySelector("td:nth-child(9)")
+            .textContent.toLowerCase();
+          const dataAdmissao = row
+            .querySelector("td:nth-child(10)")
+            .textContent.toLowerCase();
+          const dataDesligamento = row
+            .querySelector("td:nth-child(11)")
+            .textContent.toLowerCase();
+          const dataAssociacao = row
+            .querySelector("td:nth-child(12)")
+            .textContent.toLowerCase();
+          const enderecoRua = row
+            .querySelector("td:nth-child(13)")
+            .textContent.toLowerCase();
+          const enderecoNum = row
+            .querySelector("td:nth-child(14)")
+            .textContent.toLowerCase();
+          const enderecoObs = row
+            .querySelector("td:nth-child(15)")
+            .textContent.toLowerCase();
+          const apelido = row
+            .querySelector("td:nth-child(16)")
+            .textContent.toLowerCase();
+          const estadoCivil = row
+            .querySelector("td:nth-child(17)")
+            .textContent.toLowerCase();
+
+          if (
+            nome.includes(filterValue) ||
+            cpf.includes(filterValue) ||
+            dataNascimento.includes(filterValue) ||
+            email.includes(filterValue) ||
+            telefone.includes(filterValue) ||
+            matricula.includes(filterValue) ||
+            aposentado.includes(filterValue) ||
+            grupoWhats.includes(filterValue) ||
+            cargo.includes(filterValue) ||
+            dataAdmissao.includes(filterValue) ||
+            dataDesligamento.includes(filterValue) ||
+            dataAssociacao.includes(filterValue) ||
+            enderecoRua.includes(filterValue) ||
+            enderecoNum.includes(filterValue) ||
+            enderecoObs.includes(filterValue) ||
+            apelido.includes(filterValue) ||
+            estadoCivil.includes(filterValue)
+          ) {
+            row.style.display = "";
+          } else {
+            row.style.display = "none";
+          }
+        });
+      }
+
+      // Função para ordenar a tabela
+      function sortTable(columnIndex, type) {
+        const table = document.querySelector("table tbody");
+        const rowsArray = Array.from(table.rows);
+
+        // Função de comparação para ordenar de acordo com o tipo da coluna
+        rowsArray.sort((a, b) => {
+          let aText = a.cells[columnIndex].textContent;
+          let bText = b.cells[columnIndex].textContent;
+
+          if (type === "number") {
+            return parseFloat(aText) - parseFloat(bText);
+          } else if (type === "date") {
+            return new Date(aText) - new Date(bText);
+          } else {
+            // Comparação padrão para strings (ignorando case)
+            return aText.toLowerCase().localeCompare(bText.toLowerCase());
+          }
+        });
+
+        // Apagar as linhas antigas e reinseri-las ordenadas
+        rowsArray.forEach((row) => table.appendChild(row));
+      }
+
+      // Adiciona eventos de clique para ordenar as colunas
+      document.querySelectorAll("th").forEach((headerCell, index) => {
+        headerCell.addEventListener("click", () => {
+          const type = headerCell.getAttribute("data-type"); // Define o tipo da coluna
+          sortTable(index, type);
+        });
       });
 
-      
-    }
+      // Aplica o filtro quando o usuário digitar no campo de filtro
+      filterInput.addEventListener("keyup", filterSocios);
 
-     // Função para ordenar a tabela
-  function sortTable(columnIndex, type) {
-    const table = document.querySelector("table tbody");
-    const rowsArray = Array.from(table.rows);
-
-    // Função de comparação para ordenar de acordo com o tipo da coluna
-    rowsArray.sort((a, b) => {
-      let aText = a.cells[columnIndex].textContent;
-      let bText = b.cells[columnIndex].textContent;
-
-      if (type === "number") {
-        return parseFloat(aText) - parseFloat(bText);
-      } else if (type === "date") {
-        return new Date(aText) - new Date(bText);
-      } else {
-        // Comparação padrão para strings (ignorando case)
-        return aText.toLowerCase().localeCompare(bText.toLowerCase());
-      }
-    });
-
-    // Apagar as linhas antigas e reinseri-las ordenadas
-    rowsArray.forEach(row => table.appendChild(row));
-  }
-
-  // Adiciona eventos de clique para ordenar as colunas
-  document.querySelectorAll("th").forEach((headerCell, index) => {
-    headerCell.addEventListener("click", () => {
-      const type = headerCell.getAttribute("data-type"); // Define o tipo da coluna
-      sortTable(index, type);
-    });
-  });
-
-    // Aplica o filtro quando o usuário digitar no campo de filtro
-    filterInput.addEventListener('keyup', filterSocios);
-
-    loadSocios(); // Carrega a lista de sócios ao carregar a página
-    loadCargos();
-  </script>
-</body>
+      loadSocios(); // Carrega a lista de sócios ao carregar a página
+      loadCargos();
+    </script>
+  </body>
 </html>
