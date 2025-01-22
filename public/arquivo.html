@@ -20,24 +20,6 @@
     <style>
       /* Esconder todas as colunas exceto Nome e CPF em dispositivos móveis */
 
-      @media (max-width: 600px) {
-        th:nth-child(4), td:nth-child(4),  /* Grupo Whats */
-  th:nth-child(5), td:nth-child(5),  /* ?? */
-  th:nth-child(8), td:nth-child(8),  /* Grupo Whats */
-  th:nth-child(9), td:nth-child(9),  /* Cargo */
-  th:nth-child(10), td:nth-child(10), /* Data Admissão */
-  th:nth-child(11), td:nth-child(11), /* Data Desligamento */
-  th:nth-child(12), td:nth-child(12), /* Data Associação */
-  th:nth-child(13), td:nth-child(13), /* Endereço Rua */
-  th:nth-child(14), td:nth-child(14), /* Endereço Número */
-  th:nth-child(15), td:nth-child(15), /* Endereço Obs */
-  th:nth-child(16), td:nth-child(16), /* Apelido */
-  th:nth-child(17), td:nth-child(17),  /* Estado Civil */
-  th:nth-child(18), td:nth-child(18)  /* Estado Civil */ {
-          display: none; /* Ocultar essas colunas em telas pequenas */
-        }
-      }
-
       #sociosForm {
         display: none; /* Oculta o formulário inicialmente */
       }
@@ -150,6 +132,7 @@
             id="cpf"
             placeholder="CPF"
             required
+            oninput="maskCPF(this)"
           />
         </div>
 
@@ -327,235 +310,18 @@
         placeholder="Filtrar Sócios"
       />
 
-      <div class="container" id="colunas">
-        <h1 id="toggleColumnsButton">Exibir/Ocultar Colunas da Tabela</h1>
-
-        <!-- Checkboxes para selecionar colunas -->
-        <div class="checkbox-columns" id="colunas1">
-          <div class="checkbox-column">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="nome"
-                id="checkNome"
-                checked
-              />
-              <label class="form-check-label" for="checkNome">Nome</label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="cpf"
-                id="checkCPF"
-                checked
-              />
-              <label class="form-check-label" for="checkCPF">CPF</label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="data_nascimento"
-                id="checkNascimento"
-              />
-              <label class="form-check-label" for="checkNascimento"
-                >Data de Nascimento</label
-              >
-            </div>
-
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="email"
-                id="checkEmail"
-                checked
-              />
-              <label class="form-check-label" for="checkEmail">Email</label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="telefone"
-                id="checkTelefone"
-                checked
-              />
-              <label class="form-check-label" for="checkTelefone"
-                >Telefone</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="matricula"
-                id="checkMatricula"
-                checked
-              />
-              <label class="form-check-label" for="checkMatricula"
-                >Matrícula</label
-              >
-            </div>
-          </div>
-
-          <div class="checkbox-column">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="Aposentado"
-                id="checkAposentado"
-              />
-              <label class="form-check-label" for="checkAposentado"
-                >Aposentado</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="GrupoWhats"
-                id="checkGrupoWhats"
-              />
-              <label class="form-check-label" for="checkGrupoWhats"
-                >Grupo WhatsApp</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="Cargo"
-                id="checkCargo"
-              />
-              <label class="form-check-label" for="checkCargo">Cargo</label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="DataAdmissao"
-                id="checkDataAdmissao"
-              />
-              <label class="form-check-label" for="checkDataAdmissao"
-                >Data de Admissão</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="DataDesligamento"
-                id="checkDataDesligamento"
-              />
-              <label class="form-check-label" for="checkDataDesligamento"
-                >Data de Desligamento</label
-              >
-            </div>
-          </div>
-
-          <div class="checkbox-column">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="DataAssociacao"
-                id="checkDataAssociacao"
-              />
-              <label class="form-check-label" for="checkDataAssociacao"
-                >Data de Associação</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="EnderecoRua"
-                id="checkEnderecoRua"
-              />
-              <label class="form-check-label" for="checkEnderecoRua"
-                >Endereço (Rua)</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="EnderecoNum"
-                id="checkEnderecoNum"
-              />
-              <label class="form-check-label" for="checkEnderecoNum"
-                >Endereço (Número)</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="EnderecoObs"
-                id="checkEnderecoObs"
-              />
-              <label class="form-check-label" for="checkEnderecoObs"
-                >Endereço (Observação)</label
-              >
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="Apelido"
-                id="checkApelido"
-              />
-              <label class="form-check-label" for="checkApelido">Apelido</label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                value="EstadoCivil"
-                id="checkEstadoCivil"
-              />
-              <label class="form-check-label" for="checkEstadoCivil"
-                >Estado Civil</label
-              >
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="container" id="colunas"></div>
       <!-- Tabela de Sócios -->
       <h2>Lista de Sócios</h2>
       <table class="table table-striped" id="sociosTable">
         <thead>
           <tr>
             <th scope="col">Ações</th>
+            <th data-type="number" class="col-matricula">Matrícula</th>
             <th data-type="string" class="col-nome">Nome</th>
             <th data-type="string" class="col-cpf">CPF</th>
-            <th data-type="Date" class="col-data_nascimento">
-              Data de Nascimento
-            </th>
-            <th data-type="string" class="col-email">Email</th>
             <th data-type="number" class="col-telefone">Telefone</th>
-            <th data-type="number" class="col-matricula">Matrícula</th>
             <th data-type="string" class="col-Aposentado">Aposentado</th>
-            <th data-type="string" class="col-GrupoWhats">Grupo WhatsApp</th>
-            <th data-type="string" class="col-Cargo">Cargo</th>
-            <th data-type="Date" class="col-DataAdmissao">Data de Admissão</th>
-            <th data-type="date" class="col-DataDesligamento">
-              Data de Desligamento
-            </th>
-            <th data-type="date" class="col-DataAssociacao">
-              Data de Associação
-            </th>
-            <th data-type="string" class="col-EnderecoRua">Endereço (Rua)</th>
-            <th data-type="number" class="col-EnderecoNum">
-              Endereço (Número)
-            </th>
-            <th class="col-EnderecoObs">Endereço (Observação)</th>
-            <th data-type="string" class="col-Apelido">Apelido</th>
-            <th data-type="string" class="col-EstadoCivil">Estado Civil</th>
           </tr>
         </thead>
         <tbody id="sociosList">
@@ -637,22 +403,6 @@
       const filterInput = document.getElementById("filterInput");
       let isEditing = false; // Variável para verificar se estamos editando ou criando novo sócio
       let currentSocioId = null; // Armazena o ID do sócio atual que está sendo editado
-
-      // Função para alternar a visibilidade da div
-      document
-        .getElementById("toggleColumnsButton")
-        .addEventListener("click", function () {
-          const checkboxDiv = document.getElementById("colunas1");
-
-          if (
-            checkboxDiv.style.display === "none" ||
-            checkboxDiv.style.display === ""
-          ) {
-            checkboxDiv.style.display = "flex"; // Exibe a div
-          } else {
-            checkboxDiv.style.display = "none"; // Oculta a div
-          }
-        });
 
       // Função para preencher o campo select com os cargos
       function loadCargos() {
@@ -798,16 +548,13 @@
         if (currentContext === "socio") {
           if (isEditing) {
             // Editar sócio
-            fetch(
-              `${baseUrl}/socios/${currentSocioId}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(socioData),
+            fetch(`${baseUrl}/socios/${currentSocioId}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
               },
-            )
+              body: JSON.stringify(socioData),
+            })
               .then((response) => response.text())
               .then((data) => {
                 alert(data);
@@ -840,21 +587,18 @@
         } else if (currentContext === "dependente") {
           if (isEditing) {
             // Editar dependente
-            fetch(
-              `${baseUrl}/socios/${currentDependenteId}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  nome,
-                  cpf,
-                  data_nascimento,
-                  parentesco,
-                }),
+            fetch(`${baseUrl}/socios/${currentDependenteId}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
               },
-            )
+              body: JSON.stringify({
+                nome,
+                cpf,
+                data_nascimento,
+                parentesco,
+              }),
+            })
               .then((response) => response.text())
               .then((data) => {
                 alert(data);
@@ -905,25 +649,12 @@
                   <i class="fas fa-users" onclick="showDependentes(${socio.id})" ></i> <!-- Ícone de Dependentes -->
                 </button>
               </td>  
+              <td class="col-matricula">${socio.matricula}</td>
               <td class="col-nome">${socio.nome}</td>
               <td class="col-cpf">${socio.cpf}</td>
-              <td class="col-data_nascimento">${socio.data_nascimento}</td>
-              <td class="col-email">${socio.email}</td>
               <td class="col-telefone">${socio.telefone}</td>
-              <td class="col-matricula">${socio.matricula}</td>
               <td class="col-Aposentado">${socio.aposentado}</td>
-              <td class="col-GrupoWhats">${socio.grupowhats}</td>
-              <td class="col-Cargo">${socio.cargo}</td>
-              <td class="col-DataAdmissao">${socio.dataadmissao}</td>
-              <td class="col-DataDesligamento">${socio.datadesligamento}</td>
-              <td class="col-DataAssociacao">${socio.dataassociacao}</td>
-              <td class="col-EnderecoRua">${socio.enderecorua}</td>
-              <td class="col-EnderecoNum">${socio.endereconum}</td>
-              <td class="col-EnderecoObs">${socio.enderecoobs}</td>
-              <td class="col-Apelido">${socio.apelido}</td>
-              <td class="col-EstadoCivil">${socio.estadocivil}</td>
-              
-            `;
+              `;
               sociosList.appendChild(tr);
             });
             filterSocios(); // Aplica o filtro ao carregar os sócios
@@ -1092,6 +823,46 @@
               document.getElementById("data_nascimento").value = ""; // Deixa o campo em branco se não houver data
             }
 
+            if (socio.dataadmissao) {
+              document.getElementById("data_admissao").value =
+                socio.dataadmissao.split("T")[0];
+            } else {
+              document.getElementById("data_admissao").value = ""; // Deixa o campo em branco se não houver data
+            }
+
+            if (socio.dataassociacao) {
+              document.getElementById("data_associacao").value =
+                socio.dataassociacao.split("T")[0];
+            } else {
+              document.getElementById("data_associacao").value = ""; // Deixa o campo em branco se não houver data
+            }
+            document.getElementById("email").value = socio.email || "";
+            document.getElementById("telefone").value = socio.telefone || "";
+            document.getElementById("matricula").value = socio.matricula || "";
+            document.getElementById("estado_civil").value =
+              socio.estadocivil || "";
+            document.getElementById("endereco_rua").value =
+              socio.enderecorua || "";
+            document.getElementById("endereco_num").value =
+              socio.endereconum || "";
+            document.getElementById("endereco_obs").value =
+              socio.enderecoobs || "";
+            document.getElementById("apelido").value = socio.apelido || "";
+
+            const aposentadoSelect = document.getElementById("aposentado");
+            if (socio.aposentado === 1 || socio.aposentado === "1") {
+              aposentadoSelect.value = "1"; // Seleciona "SIM"
+            } else {
+              aposentadoSelect.value = "0"; // Seleciona "NÃO"
+            }
+
+            const grupowhatsSelect = document.getElementById("grupoWhats");
+            if (socio.grupowhats === 1 || socio.grupowhats === "1") {
+              grupowhatsSelect.value = "1"; // Seleciona "SIM"
+            } else {
+              grupowhatsSelect.value = "0"; // Seleciona "NÃO"
+            }
+
             // Exibe o formulário e define o estado para edição
             form.style.display = "block";
             showFormButton.style.display = "none";
@@ -1221,6 +992,17 @@
 
       // Aplica o filtro quando o usuário digitar no campo de filtro
       filterInput.addEventListener("keyup", filterSocios);
+
+      function maskCPF(input) {
+        let value = input.value;
+        // Remove tudo que não é número
+        value = value.replace(/\D/g, "");
+        // Coloca a máscara
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        input.value = value;
+      }
 
       loadSocios(); // Carrega a lista de sócios ao carregar a página
       loadCargos();
