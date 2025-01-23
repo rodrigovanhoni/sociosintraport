@@ -7,7 +7,15 @@ const mysql = require("mysql2");
 const PDFDocument = require("pdfkit");
 
 const multer = require("multer");
-const upload = multer();
+
+// No início do arquivo, depois dos requires
+const upload = multer({
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+});
+
+//const upload = multer();
 
 const app = express();
 app.use(bodyParser.json());
@@ -17,8 +25,11 @@ const bcrypt = require("bcrypt");
 const session = require("express-session"); // Para gerenciar sessões
 
 // Aumentando os limites do express
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+//app.use(express.json({ limit: "50mb" }));
+//app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 
 // Middleware para servir arquivos estáticos
 app.use(express.static("public"));
@@ -391,60 +402,106 @@ app.delete("/socios/:id", (req, res) => {
 
 // Rota para gerar PDF
 app.post("/api/generate-card", async (req, res) => {
-  const { name, memberNumber, cpf, issueDate, validUntil, photo } = req.body;
+  try {
+    const { name, memberNumber, cpf, issueDate, validUntil, photo } = req.body;
 
-  const doc = new PDFDocument({
-    size: [400, 250],
-    margin: 10,
-  });
+    // Configurar cabeçalhos
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=carteirinha.pdf",
+    );
 
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=carteirinha.pdf");
-
-  doc.pipe(res);
-
-  // Cabeçalho
-  doc
-    .fontSize(16)
-    .text("Nome do Sindicato", 50, 20, { align: "center" })
-    .fontSize(12)
-    .text("Carteira de Identificação do Sócio", 50, 40, { align: "center" })
-    .moveDown();
-
-  // Se houver foto, adiciona ela
-  if (photo) {
-    try {
-      // Remove o prefixo "data:image/jpeg;base64," da string base64
-      const base64Data = photo.split(",")[1];
-      const imageBuffer = Buffer.from(base64Data, "base64");
-
-      // Adiciona a foto no canto superior direito
-      doc.image(imageBuffer, 300, 20, {
-        fit: [80, 100], // tamanho da foto no PDF
-        align: "right",
-      });
-    } catch (error) {
-      console.error("Erro ao processar a foto:", error);
-    }
-  }
-
-  // Informações do membro
-  doc
-    .fontSize(10)
-    .text(`Nome: ${name}`, 50, 80)
-    .text(`Nº de Sócio: ${memberNumber}`, 50, 100)
-    .text(`CPF: ${cpf}`, 50, 120)
-    .text(`Data de Emissão: ${issueDate}`, 50, 140)
-    .text(`Válido até: ${validUntil}`, 50, 160);
-
-  // Rodapé
-  doc
-    .fontSize(8)
-    .text("Esta carteira é de uso pessoal e intransferível", 50, 200, {
-      align: "center",
+    // Criar documento PDF
+    const doc = new PDFDocument({
+      size: [250, 270],
+      margin: 5,
+      bufferPages: true, // Importante para manipulação de buffer
     });
 
-  doc.end();
+    // Stream do PDF
+    const chunks = [];
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => {
+      const pdfBuffer = Buffer.concat(chunks);
+      res.send(pdfBuffer);
+    });
+
+    const addWatermark = () => {
+      // Salvar o estado atual
+      doc.save();
+
+      // Configurar a marca d'água
+      doc.fill("#f0f0f0"); // Cor cinza bem clara
+      doc.fontSize(40);
+      doc.rotate(-45, { origin: [100, 125] }); // Rotacionar 45 graus
+
+      // Calcular posição central
+      const watermarkText = "SINTRAPORT";
+      const textWidth = doc.widthOfString(watermarkText);
+      const textHeight = doc.currentLineHeight();
+
+      // Desenhar a marca d'água
+      doc.text(
+        watermarkText,
+        100 - textWidth / 2, // Centralizar horizontalmente
+        125 - textHeight / 2, // Centralizar verticalmente
+        {
+          opacity: 0.2, // 20% de opacidade
+        },
+      );
+
+      // Restaurar o estado anterior
+      doc.restore();
+    };
+
+    // Adicionar marca d'água
+    addWatermark();
+
+    // Cabeçalho
+    doc
+      .fontSize(16)
+      .text("SINTRAPORT", 20, 10, { align: "center" })
+      .fontSize(12)
+      .text("Carteira de Identificação do Sócio", 10, 40, { align: "center" })
+      .moveDown();
+
+    // Foto
+    if (photo && photo.startsWith("data:image")) {
+      try {
+        const base64Data = photo.split(",")[1];
+        const imageBuffer = Buffer.from(base64Data, "base64");
+        doc.image(imageBuffer, 10, 60, {
+          fit: [100, 120],
+        });
+      } catch (error) {
+        console.error("Erro ao processar foto:", error);
+      }
+    }
+
+    // Informações do membro
+    doc.fontSize(11).text(`Nome:\n ${name}`, 120, 70);
+
+    doc
+      .fontSize(10)
+      .text(`Nº de Sócio:\n ${memberNumber}`, 120, 110)
+      .text(`CPF:\n ${cpf}`, 120, 140)
+      .text(`Data de Emissão:\n ${issueDate}`, 120, 170)
+      .text(`Válido até:\n ${validUntil}`, 120, 200);
+
+    // Rodapé
+    doc
+      .fontSize(8)
+      .text("Esta carteira é de uso pessoal \ne intransferível", 10, 230, {
+        align: "center",
+      });
+
+    // Finalizar documento
+    doc.end();
+  } catch (error) {
+    console.error("Erro ao gerar PDF:", error);
+    res.status(500).json({ error: "Erro ao gerar PDF" });
+  }
 });
 
 // ... código anterior ...
