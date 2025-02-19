@@ -39,6 +39,14 @@ app.use((req, res, next) => {
   res.setHeader("X-Nginx-Upload-Limit", "50m");
   next();
 });
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER, // Adicione no seu .env
+    pass: process.env.EMAIL_PASSWORD, // Adicione no seu .env
+  },
+});
 /*const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -83,6 +91,110 @@ app.use(
     cookie: { secure: false }, // Use secure: true em produção com HTTPS
   }),
 );
+
+async function enviarCodigoVerificacao(email) {
+  const codigo = Math.floor(100000 + Math.random() * 900000); // Código de 6 dígitos
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Código de Verificação - SINTRAPORT",
+      html: `
+        <h2>SINTRAPORT - Código de Verificação</h2>
+        <p>Seu código de verificação é: <strong>${codigo}</strong></p>
+        <p>Este código expira em 10 minutos.</p>
+        <p>Se você não solicitou este código, por favor ignore este email.</p>
+      `,
+    });
+
+    return codigo;
+  } catch (error) {
+    console.error("Erro ao enviar email:", error);
+    throw error;
+  }
+}
+
+app.post("/solicitar-codigo", async (req, res) => {
+  const { cpf } = req.body;
+
+  try {
+    // Verifica se o email existe na base
+    const checkEmail = await pool.query("SELECT * FROM socios WHERE cpf = $1", [
+      cpf,
+    ]);
+
+    if (checkEmail.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "não encontrado na base de dados",
+      });
+    }
+
+    const user = checkEmail.rows[0];
+
+    // Gera e envia o código
+    const codigo = await enviarCodigoVerificacao(user.email);
+
+    // Salva o código no banco (você pode criar uma nova tabela para isso)
+    await pool.query(
+      `UPDATE socios 
+       SET verification_code = $1, 
+           code_expiration = NOW() + INTERVAL '10 minutes'
+       WHERE cpf = $2`,
+      [codigo, cpf],
+    );
+
+    res.json({
+      success: true,
+      message: "Código enviado com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erro ao processar solicitação",
+    });
+  }
+});
+
+app.post("/verificar-codigo", async (req, res) => {
+  const { email, codigo } = req.body;
+
+  try {
+    const result = await pool.query(
+      `SELECT * FROM socios 
+       WHERE email = $1 
+       AND verification_code = $2 
+       AND code_expiration > NOW()`,
+      [email, codigo],
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: false,
+        message: "Código inválido ou expirado",
+      });
+    }
+
+    // Limpa o código após uso
+    await pool.query(
+      "UPDATE socios SET verification_code = NULL, code_expiration = NULL WHERE email = $1",
+      [email],
+    );
+
+    res.json({
+      success: true,
+      message: "Código verificado com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erro ao verificar código",
+    });
+  }
+});
 
 // Rota de login
 app.post("/login", (req, res) => {
