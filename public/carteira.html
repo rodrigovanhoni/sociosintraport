@@ -166,10 +166,14 @@
                 issueDate,
                 validUntil,
                 photo,
+                is_socio, // novo campo
                 onBack,
             }) => {
                 const [isLoading, setIsLoading] = React.useState(false);
                 const [isFullscreen, setIsFullscreen] = React.useState(false);
+                const [showModal, setShowModal] = React.useState(false);
+                const [codigo, setCodigo] = React.useState("");
+                const [error, setError] = React.useState("");
 
                 // Função para entrar em tela cheia
                 const enterFullscreen = () => {
@@ -303,15 +307,24 @@
                                                 alt="Logo Sintraport"
                                                 className="h-24 w-auto"
                                             />
+
                                             <div>
                                                 <h1 className="text-2xl font-bold text-blue-800">
                                                     SINDICATO DOS TRABALHADORES
-                                                    ADMINISTRATIVOS EM CAPATAZIA
+                                                    PORTUARIOS DO PARANA
                                                 </h1>
-                                                <p className="text-lg text-blue-600">
-                                                    Carteira de Identificação do
-                                                    Sócio
-                                                </p>
+                                                {is_socio ? (
+                                                    <p className="text-lg text-blue-600">
+                                                        Carteira de
+                                                        Identificação do Sócio
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-lg text-blue-600">
+                                                        Carteira de
+                                                        Identificação de
+                                                        Dependente
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -366,14 +379,16 @@
                                                         {validUntil}
                                                     </p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm text-blue-600">
-                                                        Matrícula
-                                                    </p>
-                                                    <p className="font-bold text-lg">
-                                                        {memberNumber}
-                                                    </p>
-                                                </div>
+                                                {is_socio && (
+                                                    <div>
+                                                        <p className="text-sm text-blue-600">
+                                                            Matrícula
+                                                        </p>
+                                                        <p className="font-bold text-lg">
+                                                            {memberNumber}
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -439,12 +454,20 @@
                             {/* Conteúdo principal (mantido sobre a marca d'água) */}
                             <div className="relative z-10">
                                 {/* Cabeçalho com título centralizado */}
-                                <div className="text-center mb-6">
-                                    <h1 className="text-2xl font-bold text-[#003366]">
-                                        Carteira de Identificação do Sócio
-                                    </h1>
-                                </div>
-
+                                {is_socio ? (
+                                    <div className="text-center mb-6">
+                                        <h1 className="text-2xl font-bold text-[#003366]">
+                                            Carteira de Identificação do Sócio
+                                        </h1>
+                                    </div>
+                                ) : (
+                                    <div className="text-center mb-6">
+                                        <h1 className="text-2xl font-bold text-[#003366]">
+                                            Carteira de Identificação de
+                                            Dependente
+                                        </h1>
+                                    </div>
+                                )}
                                 {/* Container principal em grid */}
                                 <div className="grid grid-cols-[auto,1fr] gap-6">
                                     {/* Coluna da foto */}
@@ -470,16 +493,16 @@
                                                 {name}
                                             </p>
                                         </div>
-
-                                        <div>
-                                            <p className="text-sm text-gray-600">
-                                                Matrícula
-                                            </p>
-                                            <p className="font-bold">
-                                                {memberNumber}
-                                            </p>
-                                        </div>
-
+                                        {is_socio && (
+                                            <div>
+                                                <p className="text-sm text-gray-600">
+                                                    Matrícula
+                                                </p>
+                                                <p className="font-bold">
+                                                    {memberNumber}
+                                                </p>
+                                            </div>
+                                        )}
                                         <div>
                                             <p className="text-sm text-gray-600">
                                                 CPF
@@ -530,13 +553,165 @@
                             >
                                 Ver em Tela Cheia
                             </button>
-                            <button
-                                onClick={generatePDF}
-                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            >
-                                Dependentes
-                            </button>
+                            {is_socio && ( // Só mostra o botão se for sócio
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            setIsLoading(true);
+                                            setError("");
+
+                                            const response = await fetch(
+                                                "/solicitar-codigo",
+                                                {
+                                                    method: "POST",
+                                                    headers: {
+                                                        "Content-Type":
+                                                            "application/json",
+                                                    },
+                                                    body: JSON.stringify({
+                                                        cpf,
+                                                    }),
+                                                },
+                                            );
+
+                                            const data = await response.json();
+
+                                            if (data.success) {
+                                                setShowModal(true);
+                                            } else {
+                                                setError(
+                                                    data.message ||
+                                                        "Erro ao enviar código",
+                                                );
+                                            }
+                                        } catch (error) {
+                                            setError(
+                                                "Erro ao enviar código de verificação",
+                                            );
+                                        } finally {
+                                            setIsLoading(false);
+                                        }
+                                    }}
+                                    disabled={isLoading}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-300"
+                                >
+                                    {isLoading ? "Enviando..." : "Dependentes"}
+                                </button>
+                            )}
                         </div>
+                        {/* Modal */}
+                        {showModal && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                                <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                                    <h2 className="text-xl font-bold mb-4">
+                                        Digite o código de verificação
+                                    </h2>
+                                    <p className="text-gray-600 mb-4">
+                                        Um código foi enviado para seu email
+                                        cadastrado
+                                    </p>
+
+                                    <input
+                                        type="text"
+                                        value={codigo}
+                                        onChange={(e) =>
+                                            setCodigo(e.target.value)
+                                        }
+                                        placeholder="Digite o código"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
+                                        maxLength={6}
+                                    />
+
+                                    {error && (
+                                        <p className="text-red-500 text-sm mb-4">
+                                            {error}
+                                        </p>
+                                    )}
+
+                                    <div className="flex justify-end gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setShowModal(false);
+                                                setCodigo("");
+                                                setError("");
+                                            }}
+                                            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                                        >
+                                            Cancelar
+                                        </button>
+
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    setIsLoading(true);
+                                                    setError("");
+
+                                                    console.log(
+                                                        "Enviando para verificação:",
+                                                        { cpf, codigo },
+                                                    ); // Log dos dados enviados
+
+                                                    const response =
+                                                        await fetch(
+                                                            "/verificar-codigo",
+                                                            {
+                                                                method: "POST",
+                                                                headers: {
+                                                                    "Content-Type":
+                                                                        "application/json",
+                                                                },
+                                                                body: JSON.stringify(
+                                                                    {
+                                                                        cpf,
+                                                                        codigo,
+                                                                    },
+                                                                ),
+                                                            },
+                                                        );
+
+                                                    console.log(
+                                                        "Status da resposta:",
+                                                        response.status,
+                                                    ); // Log do status HTTP
+
+                                                    const data =
+                                                        await response.json();
+                                                    console.log(
+                                                        "Resposta do servidor:",
+                                                        data,
+                                                    ); // Log da resposta completa
+
+                                                    if (data.success) {
+                                                        window.location.href = `/dependentes/${data.socioId}`;
+                                                    } else {
+                                                        setError(
+                                                            data.message ||
+                                                                "Código inválido",
+                                                        );
+                                                    }
+                                                } catch (error) {
+                                                    console.error(
+                                                        "Erro detalhado:",
+                                                        error,
+                                                    ); // Log detalhado do erro
+                                                    setError(
+                                                        "Erro ao verificar código",
+                                                    );
+                                                } finally {
+                                                    setIsLoading(false);
+                                                }
+                                            }}
+                                            disabled={isLoading}
+                                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-300"
+                                        >
+                                            {isLoading
+                                                ? "Verificando..."
+                                                : "Verificar"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             };

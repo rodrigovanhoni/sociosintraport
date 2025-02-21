@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const mysql = require("mysql2");
 const PDFDocument = require("pdfkit");
+const nodemailer = require("nodemailer");
 
 const multer = require("multer");
 
@@ -20,6 +21,12 @@ const upload = multer({
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
+
+// Configura o EJS como view engine
+app.set("view engine", "ejs");
+
+// Configura o diretório de views (geralmente ./views)
+app.set("views", "./views");
 
 const bcrypt = require("bcrypt");
 const session = require("express-session"); // Para gerenciar sessões
@@ -159,15 +166,15 @@ app.post("/solicitar-codigo", async (req, res) => {
 });
 
 app.post("/verificar-codigo", async (req, res) => {
-  const { email, codigo } = req.body;
+  const { cpf, codigo } = req.body;
 
   try {
     const result = await pool.query(
       `SELECT * FROM socios 
-       WHERE email = $1 
-       AND verification_code = $2 
-       AND code_expiration > NOW()`,
-      [email, codigo],
+             WHERE cpf = $1 
+             AND verification_code = $2 
+             AND CAST(code_expiration AS timestamp) > NOW()`,
+      [cpf, codigo],
     );
 
     if (result.rows.length === 0) {
@@ -177,15 +184,19 @@ app.post("/verificar-codigo", async (req, res) => {
       });
     }
 
-    // Limpa o código após uso
+    // Salva o ID do sócio na session
+    req.session.socioId = result.rows[0].id;
+    req.session.authenticated = true;
+
     await pool.query(
-      "UPDATE socios SET verification_code = NULL, code_expiration = NULL WHERE email = $1",
-      [email],
+      "UPDATE socios SET verification_code = NULL, code_expiration = NULL WHERE cpf = $1",
+      [cpf],
     );
 
     res.json({
       success: true,
       message: "Código verificado com sucesso",
+      socioId: result.rows[0].id,
     });
   } catch (error) {
     console.error("Erro:", error);
@@ -369,6 +380,28 @@ app.post("/socios", (req, res) => {
 });
 */
 
+// No seu server.js, junto com as outras funções
+/*function checkAuth(req, res, next) {
+  if (!req.session.authenticated || !req.session.socioId) {
+    return res.redirect("/");
+  }
+  next();
+}*/
+
+const checkAuth = (req, res, next) => {
+  // Bypass temporário para desenvolvimento
+  req.session.userId = 1;
+  req.session.email = "teste@teste.com";
+  return next();
+
+  /* CÓDIGO ORIGINAL - descomentar quando terminar os testes
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+    next();
+    */
+};
+
 app.get("/cargos", (req, res) => {
   const sql = "SELECT idCargo, nome FROM cargo";
 
@@ -450,6 +483,83 @@ app.get("/socio/cpf/:cpf", async (req, res) => {
   } catch (err) {
     console.error("Erro ao consultar CPF:", err);
     return res.status(500).send("Erro ao consultar o CPF");
+  }
+});
+
+app.get("/dependentes/:id", checkAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verifica se o ID da URL corresponde ao ID da session
+    if (parseInt(id) !== req.session.socioId) {
+      return res.redirect("/"); // Ou envie uma mensagem de erro
+    }
+
+    const socioResult = await pool.query(
+      "SELECT nome FROM socios WHERE id = $1",
+      [id],
+    );
+
+    if (socioResult.rows.length === 0) {
+      return res.status(404).send("Sócio não encontrado");
+    }
+
+    const dependentesResult = await pool.query(
+      "SELECT * FROM dependentes WHERE socio_id = $1",
+      [id],
+    );
+
+    res.render("dependentes", {
+      socio: socioResult.rows[0],
+      dependentes: dependentesResult.rows,
+      socioId: id,
+    });
+  } catch (error) {
+    console.error("Erro:", error);
+    res.status(500).send("Erro ao carregar dependentes");
+  }
+});
+
+// Protege a rota POST também
+app.post("/dependentes", checkAuth, upload.single("foto"), async (req, res) => {
+  try {
+    const { nome, cpf, parentesco, data_nascimento, socio_id } = req.body;
+    let fotoBase64 = null;
+
+    // Se uma foto foi enviada, converte para base64
+    if (req.file) {
+      fotoBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    }
+
+    // Ajusta a data para evitar o problema do timezone
+    const data = new Date(data_nascimento);
+    data.setUTCHours(12);
+
+    const result = await pool.query(
+      "INSERT INTO dependentes (nome, cpf, parentesco, data_nascimento, foto, socio_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [nome, cpf, parentesco, data, fotoBase64, socio_id],
+    );
+
+    console.log("Data retornada do banco:", result.rows[0].data_nascimento);
+
+    res.redirect(`/dependentes/${socio_id}`);
+  } catch (error) {
+    console.error("Erro ao cadastrar dependente:", error);
+    res.status(500).send("Erro ao cadastrar dependente");
+  }
+});
+
+app.post("/dependentes/:id/delete", checkAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { socio_id } = req.body;
+
+    await pool.query("DELETE FROM dependentes WHERE id = $1", [id]);
+
+    res.redirect(`/dependentes/${socio_id}`);
+  } catch (error) {
+    console.error("Erro ao deletar dependente:", error);
+    res.status(500).send("Erro ao deletar dependente");
   }
 });
 
@@ -624,19 +734,30 @@ app.get("/api/member/:cpf", async (req, res) => {
     console.log("CPF buscado:", cpf);
 
     // Consulta ao banco de dados
-    const sqlSocio = "SELECT * FROM socios WHERE cpf = $1 AND socio IS NULL";
-    const socioResult = await pool.query(sqlSocio, [cpf]);
-
+    const sqlSocio =
+      "SELECT *, true as is_socio FROM socios WHERE cpf = $1 AND socio IS NULL";
+    let socioResult = await pool.query(sqlSocio, [cpf]);
+    console.log("tmp1");
     if (socioResult.rows.length === 0) {
-      return res.status(404).json({ error: "Membro não encontrado" });
+      console.log("Sócio não encontrado");
+      // Se não for sócio, verifica se é dependente
+      socioResult = await pool.query(
+        "SELECT *, false as is_socio FROM dependentes WHERE cpf = $1",
+        [cpf],
+      );
     }
 
+    if (socioResult.rows.length === 0) {
+      return res.status(404).json({ error: "CPF não encontrado" });
+    }
     // Pegando o primeiro resultado
     const data = socioResult.rows[0];
-
+    console.log(data.is_socio);
     // Formatando as datas (assumindo que issueDate é a data atual e validUntil é 1 ano depois)
     const today = new Date();
     const validUntil = new Date(today);
+
+    const is_socio = data.is_socio;
     validUntil.setFullYear(validUntil.getFullYear() + 1);
 
     const placeholderPhoto =
@@ -648,6 +769,7 @@ app.get("/api/member/:cpf", async (req, res) => {
       name: data.nome, // ajuste conforme o nome da coluna no seu banco
       memberNumber: data.matricula, // ajuste conforme o nome da coluna no seu banco
       cpf: data.cpf,
+      is_socio: data.is_socio,
       issueDate: today.toLocaleDateString("pt-BR"),
       validUntil: validUntil.toLocaleDateString("pt-BR"),
       photo: placeholderPhoto, // ajuste conforme o nome da coluna no seu banco
