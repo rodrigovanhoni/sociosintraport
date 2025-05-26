@@ -66,7 +66,8 @@
       .then(data => {
         console.log(data);
         if (data.success) {
-          sessionStorage.setItem('loggedIn', true);  
+          sessionStorage.setItem('loggedIn', true); 
+          
           window.location.href = '/arquivo.html'; // Redireciona para a página de consulta
         } else {
           document.getElementById('loginError').style.display = 'block';

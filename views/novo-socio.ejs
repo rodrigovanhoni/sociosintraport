@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= modoEdicao ? 'Editar Sócio' : 'Cadastro de Novo Sócio' %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .btn-voltar {
+            width: auto;
+        }
+
+        .required-field::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <%
+    function formatDate(date) {
+        if (!date) return '';
+        try {
+            return new Date(date).toISOString().split('T')[0];
+        } catch (e) {
+            return '';
+        }
+    }
+    %>
+    <div class="container">
+        <div class="form-container">
+            <div class="header">
+                <h1 class="h3"><%= modoEdicao ? 'Editar Sócio' : 'Cadastro de Novo Sócio' %></h1>
+                <a href="/arquivo.html" class="btn btn-secondary btn-sm btn-voltar">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+
+            <form id="formSocio">
+                <% if (modoEdicao) { %>
+                    <input type="hidden" id="socioId" value="<%= socio.id %>">
+                <% } %>
+
+                <!-- Identificação -->
+                <div class="row mb-4">
+                    <h5>Identificação</h5>
+                    <div class="col-md-3 mb-3">
+                        <label for="matricula" class="form-label required-field">Matrícula</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="matricula" 
+                               required 
+                               maxlength="4"
+                               value="<%= modoEdicao ? socio.matricula : '' %>"
+                               placeholder="Digite a matrícula">
+                    </div>
+                    <div class="col-md-9 mb-3">
+                        <label for="nome" class="form-label required-field">Nome Completo</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="nome" 
+                               required
+                               value="<%= modoEdicao ? socio.nome : '' %>"
+                               placeholder="Digite o nome completo">
+                    </div>
+                </div>
+
+                <!-- Dados Pessoais -->
+                <div class="row mb-4">
+                    <h5>Dados Pessoais</h5>
+                    <div class="col-md-4 mb-3">
+                        <label for="cpf" class="form-label required-field">CPF</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="cpf" 
+                               required
+                               value="<%= modoEdicao ? socio.cpf : '' %>"
+                               placeholder="000.000.000-00">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="data_nascimento" class="form-label required-field">Data de Nascimento</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="data_nascimento" 
+                               required
+                               value="<%= modoEdicao ? formatDate(socio.data_nascimento) : '' %>">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="estado_civil" class="form-label">Estado Civil</label>
+                        <select class="form-control" id="estado_civil" name="estado_civil">
+                            <option value="">Selecione...</option>
+                            <% 
+                            const estadosCivis = [
+                                'Solteiro(a)',
+                                'Casado(a)',
+                                'Divorciado(a)',
+                                'Viúvo(a)',
+                                'Separado(a)',
+                                'União Estável'
+                            ];
+                            %>
+                            <% estadosCivis.forEach(function(estado) { %>
+                                <option value="<%= estado %>" 
+                                        <%= (modoEdicao && socio.estadocivil === estado) ? 'selected' : '' %>>
+                                    <%= estado %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dados de Contato -->
+                <div class="row mb-4">
+                    <h5>Dados de Contato</h5>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label required-field">Email</label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               required
+                               value="<%= modoEdicao ? socio.email : '' %>"
+                               placeholder="exemplo@email.com">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="telefone" class="form-label required-field">Telefone</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="telefone" 
+                               required
+                               value="<%= modoEdicao ? socio.telefone : '' %>"
+                               placeholder="(00) 00000-0000">
+                    </div>
+                </div>
+
+                <!-- Dados do Sindicato -->
+                <div class="row mb-4">
+                    <h5>Dados do Sindicato</h5>
+                    <div class="col-md-4 mb-3">
+                        <label for="cargo" class="form-label">Cargo</label>
+                        <select class="form-control" id="cargo" name="cargo">
+                            <option value="">Selecione o cargo...</option>
+                            <% cargos.forEach(function(cargo) { %>
+                                <option value="<%= cargo.idcargo %>" 
+                                        <%= (modoEdicao && socio.cargo !== null && parseInt(socio.cargo) === cargo.idcargo) ? 'selected' : '' %>>
+                                    <%= cargo.nome %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="data_admissao" class="form-label">Data de Admissão</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="data_admissao"
+                               value="<%= modoEdicao ? formatDate(socio.dataadmissao) : '' %>">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="data_associacao" class="form-label">Data de Associação</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="data_associacao"
+                               value="<%= modoEdicao ? formatDate(socio.dataassociacao) : '' %>">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="aposentado" class="form-label">Aposentado</label>
+                        <select class="form-control" id="aposentado">
+                            <option value="0" <%= modoEdicao && socio.aposentado == 0 ? 'selected' : '' %>>Não</option>
+                            <option value="1" <%= modoEdicao && socio.aposentado == 1 ? 'selected' : '' %>>Sim</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="grupowhats" class="form-label">Grupo WhatsApp</label>
+                        <select class="form-control" id="grupowhats">
+                            <option value="0" <%= modoEdicao && socio.grupowhats == 0 ? 'selected' : '' %>>Não</option>
+                            <option value="1" <%= modoEdicao && socio.grupowhats == 1 ? 'selected' : '' %>>Sim</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Endereço -->
+                <div class="row mb-4">
+                    <h5>Endereço</h5>
+                    <div class="col-md-2 mb-3">
+                        <label for="enderecocep" class="form-label">CEP</label>
+                        <input type="text" 
+                            class="form-control" 
+                            id="enderecocep"
+                            name="enderecocep"
+                            value="<%= modoEdicao ? socio.enderecocep : '' %>"
+                            placeholder="00000-000">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="enderecorua" class="form-label">Rua</label>
+                        <input type="text" 
+                            class="form-control" 
+                            id="enderecorua"
+                            name="enderecorua"
+                            value="<%= modoEdicao ? socio.enderecorua : '' %>"
+                            placeholder="Nome da rua">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="endereconum" class="form-label">Número</label>
+                        <input type="text" 
+                            class="form-control" 
+                            id="endereconum"
+                            name="endereconum"
+                            value="<%= modoEdicao ? socio.endereconum : '' %>"
+                            placeholder="Nº">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="enderecoobs" class="form-label">Complemento</label>
+                        <input type="text" 
+                            class="form-control" 
+                            id="enderecoobs"
+                            name="enderecoobs"
+                            value="<%= modoEdicao ? socio.enderecoobs : '' %>"
+                            placeholder="Complemento">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="enderecobairro" class="form-label">Bairro</label>
+                        <input type="text" 
+                            class="form-control" 
+                            id="enderecobairro"
+                            name="enderecobairro"
+                            value="<%= modoEdicao ? socio.enderecobairro : '' %>"
+                            placeholder="Bairro">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="enderecocidade" class="form-label">Cidade</label>
+                        <input type="text" 
+                            class="form-control" 
+                            id="enderecocidade"
+                            name="enderecocidade"
+                            value="<%= modoEdicao ? socio.enderecocidade : '' %>"
+                            placeholder="Cidade">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="enderecoestado" class="form-label">Estado</label>
+                        <input type="text" 
+                            class="form-control" 
+                            id="enderecoestado"
+                            name="enderecoestado"
+                            maxlength="2"
+                            value="<%= modoEdicao ? socio.enderecoestado : '' %>"
+                            placeholder="UF">
+                    </div>
+                </div>
+
+                <!-- Informações Adicionais -->
+                <div class="row mb-4">
+                    <h5>Informações Adicionais</h5>
+                    <div class="col-md-12 mb-3">
+                        <label for="apelido" class="form-label">Apelido</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="apelido"
+                               value="<%= modoEdicao ? socio.apelido : '' %>"
+                               placeholder="Apelido">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/arquivo.html" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <%= modoEdicao ? 'Salvar Alterações' : 'Cadastrar Sócio' %>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Máscaras
+            $('#cpf').mask('000.000.000-00');
+            $('#telefone').mask('(00) 00000-0000');
+            
+            $('#cep').mask('00000-000');
+
+            // Busca CEP
+            $('#enderecocep').blur(function() {
+            const cep = $(this).val().replace(/\D/g, '');
+        
+        if (cep.length === 8) {
+            // Mostrar loading ou desabilitar campos
+            $('#enderecorua').val('Buscando...');
+            $('#enderecorua, #enderecobairro, #enderecocidade, #enderecoestado').prop('disabled', true);
+
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro na busca do CEP');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.erro) {
+                        $('#enderecorua').val(data.logradouro || '');
+                        $('#enderecobairro').val(data.bairro || '');
+                        $('#enderecocidade').val(data.localidade || '');
+                        $('#enderecoestado').val(data.uf || '');
+                    } else {
+                        alert('CEP não encontrado');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao buscar o CEP. Tente novamente.');
+                })
+                .finally(() => {
+                    // Habilitar campos novamente
+                    $('#enderecorua, #enderecobairro, #enderecocidade, #enderecoestado').prop('disabled', false);
+                });
+        }
+    });
+
+            // Submit do formulário
+            $('#formSocio').submit(function(e) {
+                e.preventDefault();
+
+                const formData = {
+                    nome: $('#nome').val(),
+                    cpf: $('#cpf').val(),
+                    data_nascimento: $('#data_nascimento').val(),
+                    email: $('#email').val(),
+                    telefone: $('#telefone').val(),
+                    aposentado: $('#aposentado').val(),
+                    grupowhats: $('#grupowhats').val(),
+                    cargo: $('#cargo').val(),
+                    matricula: $('#matricula').val(), // Adicionado campo matrícula
+                    dataadmissao: $('#data_admissao').val(),
+                    dataassociacao: $('#data_associacao').val(),
+                    enderecocep: $('#enderecocep').val(),
+                    enderecorua: $('#enderecorua').val(),
+                    endereconum: $('#endereconum').val(),
+                    enderecoobs: $('#enderecoobs').val(),
+                    enderecobairro: $('#enderecobairro').val(),
+                    enderecocidade: $('#enderecocidade').val(),
+                    enderecoestado: $('#enderecoestado').val(),
+                    apelido: $('#apelido').val(),
+                    estadocivil: $('#estado_civil').val()
+                };
+
+                // Validações
+                if (!formData.matricula) {
+                    alert('Por favor, preencha a matrícula');
+                    return;
+                }
+
+                const socioId = $('#socioId').val();
+                const method = socioId ? 'PUT' : 'POST';
+                const url = socioId ? `/socios/${socioId}` : '/socios';
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success) {
+                        window.location.href = '/arquivo.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao processar operação. Por favor, tente novamente.(1)');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

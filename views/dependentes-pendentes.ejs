@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dependentes Pendentes</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        .modal.show {
+            display: block;
+        }
+    </style>
+    <script>
+        async function atualizarStatus(dependenteId, novoStatus) {
+            if (novoStatus === 'reprovado') {
+                mostrarModalReprovacao(dependenteId);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/dependentes/${dependenteId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        status: novoStatus,
+                        motivo_reprovacao: null 
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erro ao atualizar o status');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao atualizar o status');
+            }
+        }
+
+        function mostrarModalReprovacao(dependenteId) {
+            const modal = document.getElementById('modalReprovacao');
+            const form = document.getElementById('formReprovacao');
+            form.dataset.dependenteId = dependenteId;
+            modal.classList.add('show');
+        }
+
+        function fecharModal() {
+            const modal = document.getElementById('modalReprovacao');
+            modal.classList.remove('show');
+        }
+
+        async function confirmarReprovacao(event) {
+            event.preventDefault();
+            const form = document.getElementById('formReprovacao');
+            const dependenteId = form.dataset.dependenteId;
+            const motivo = document.getElementById('motivoReprovacao').value;
+
+            if (!motivo.trim()) {
+                alert('Por favor, informe o motivo da reprovação.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/dependentes/${dependenteId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        status: 'reprovado',
+                        motivo_reprovacao: motivo 
+                    })
+                });
+
+                if (response.ok) {
+                    fecharModal();
+                    window.location.reload();
+                } else {
+                    alert('Erro ao reprovar dependente');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao reprovar dependente');
+            }
+        }
+    </script>
+</head>
+<body class="p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Dependentes Pendentes</h1>
+            <a href="/arquivo.html" 
+               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                Voltar
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white shadow-md rounded">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Sócio
+                        </th>
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            CPF Sócio
+                        </th>
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Dependente
+                        </th>
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            CPF Dependente
+                        </th>
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Parentesco
+                        </th>
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Documento
+                        </th>
+                        <th class="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Ações
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (dependentes.length === 0) { %>
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                Não há dependentes pendentes de aprovação.
+                            </td>
+                        </tr>
+                    <% } else { %>
+                        <% dependentes.forEach(dependente => { %>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 border-b border-gray-200">
+                                    <%= dependente.nome_socio %>
+                                </td>
+                                <td class="px-6 py-4 border-b border-gray-200">
+                                    <%= dependente.cpf_socio %>
+                                </td>
+                                <td class="px-6 py-4 border-b border-gray-200">
+                                    <%= dependente.nome %>
+                                </td>
+                                <td class="px-6 py-4 border-b border-gray-200">
+                                    <%= dependente.cpf %>
+                                </td>
+                                <td class="px-6 py-4 border-b border-gray-200">
+                                    <%= dependente.parentesco %>
+                                </td>
+                                <td class="px-6 py-4 border-b border-gray-200">
+                                    <% if (dependente.documento_comprobatorio) { %>
+                                        <a href="/dependentes/<%= dependente.id %>/documento" 
+                                           class="text-blue-600 hover:text-blue-800"
+                                           target="_blank">
+                                            Ver documento
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-gray-500">Não enviado</span>
+                                    <% } %>
+                                </td>
+                                <td class="px-6 py-4 border-b border-gray-200">
+                                    <button onclick="atualizarStatus('<%= dependente.id %>', 'aprovado')" 
+                                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-sm mr-2">
+                                        Aprovar
+                                    </button>
+                                    <button onclick="atualizarStatus('<%= dependente.id %>', 'reprovado')" 
+                                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
+                                        Reprovar
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Reprovação -->
+    <div id="modalReprovacao" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Motivo da Reprovação</h2>
+            <form id="formReprovacao" onsubmit="confirmarReprovacao(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="motivoReprovacao">
+                        Por favor, informe o motivo da reprovação:
+                    </label>
+                    <textarea
+                        id="motivoReprovacao"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        rows="4"
+                        required
+                    ></textarea>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" 
+                            onclick="fecharModal()"
+                            class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Confirmar Reprovação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

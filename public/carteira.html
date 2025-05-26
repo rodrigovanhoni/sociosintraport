@@ -62,9 +62,21 @@
 
                         const response = await fetch(`/api/member/${cpf}`);
 
+                        if (response.status === 403) {
+                            const data = await response.json();
+                            if (data.status === 'pendente') {
+                                 throw new Error("Este dependente está aguardando aprovação");
+                            } else if (data.status === 'reprovado') {
+                                 throw new Error("Cadastro de dependente não aprovado");
+                            }
+                            
+                        }
+                        
                         if (!response.ok) {
                             throw new Error("Membro não encontrado");
                         }
+
+                        
 
                         const data = await response.json();
                         setMemberData(data);
@@ -94,22 +106,89 @@
                 );
             };
 
+            const CaptchaImage = ({ text }) => {
+                const canvasRef = React.useRef(null);
+
+                React.useEffect(() => {
+                    const canvas = canvasRef.current;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Limpar canvas
+                    ctx.fillStyle = '#f3f4f6';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Adicionar ruído/linhas
+                    for (let i = 0; i < 10; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                        ctx.strokeStyle = '#' + Math.floor(Math.random()*16777215).toString(16);
+                        ctx.stroke();
+                    }
+
+                    // Desenhar texto com distorção
+                    ctx.font = 'bold 24px Arial';
+                    ctx.fillStyle = '#000';
+                    const chars = text.split('');
+                    let x = 10;
+                    chars.forEach(char => {
+                        const rotation = (Math.random() - 0.5) * 0.5;
+                        ctx.save();
+                        ctx.translate(x, 30);
+                        ctx.rotate(rotation);
+                        ctx.fillText(char, 0, 0);
+                        ctx.restore();
+                        x += 20;
+                    });
+                }, [text]);
+
+                return <canvas ref={canvasRef} width="200" height="60" />;
+            };
+
+           
             const SearchScreen = ({ onSearch, isLoading, error }) => {
                 const [cpf, setCpf] = React.useState("");
+                const [captcha, setCaptcha] = React.useState({ question: "", answer: 0 });
+                const [userAnswer, setUserAnswer] = React.useState("");
+                const [captchaError, setCaptchaError] = React.useState("");
+                const [showCaptcha, setShowCaptcha] = React.useState(true);
 
-                const handleSubmit = (e) => {
-                    e.preventDefault();
-                    onSearch(cpf);
+                const generateCaptcha = () => {
+                    const num1 = Math.floor(Math.random() * 10);
+                    const num2 = Math.floor(Math.random() * 10);
+                    setCaptcha({
+                        question: `${num1} + ${num2}`,
+                        answer: num1 + num2
+                    });
+                    setUserAnswer("");
                 };
 
-                // Função para formatar o CPF enquanto digita
+                React.useEffect(() => {
+                    generateCaptcha();
+                }, []);
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    
+                    if (parseInt(userAnswer) !== captcha.answer) {
+                        setCaptchaError("Resposta incorreta. Tente novamente.");
+                        generateCaptcha();
+                        return;
+                    }
+
+                    setShowCaptcha(false);
+                    await onSearch(cpf);
+                    generateCaptcha();
+                    setShowCaptcha(true);
+                };
+
                 const formatCPF = (value) => {
                     return value
-                        .replace(/\D/g, "") // Remove tudo o que não é dígito
-                        .replace(/(\d{3})(\d)/, "$1.$2") // Coloca ponto após os primeiros 3 dígitos
-                        .replace(/(\d{3})(\d)/, "$1.$2") // Coloca ponto após os segundos 3 dígitos
-                        .replace(/(\d{3})(\d{1,2})/, "$1-$2") // Coloca hífen antes dos últimos 2 dígitos
-                        .replace(/(-\d{2})\d+?$/, "$1"); // Remove os dígitos após os 2 últimos
+                        .replace(/\D/g, "")
+                        .replace(/(\d{3})(\d)/, "$1.$2")
+                        .replace(/(\d{3})(\d)/, "$1.$2")
+                        .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+                        .replace(/(-\d{2})\d+?$/, "$1");
                 };
 
                 const handleCPFChange = (e) => {
@@ -123,10 +202,7 @@
                         </h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label
-                                    htmlFor="cpf"
-                                    className="block text-sm font-medium text-gray-700"
-                                >
+                                <label htmlFor="cpf" className="block text-sm font-medium text-gray-700">
                                     Digite seu CPF
                                 </label>
                                 <input
@@ -140,6 +216,38 @@
                                     required
                                 />
                             </div>
+
+                            {showCaptcha && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Resolva a operação abaixo:
+                                    </label>
+                                    <div className="mb-2">
+                                        <CaptchaImage text={captcha.question} />
+                                    </div>
+                                    <input
+                                        type="number"
+                                        value={userAnswer}
+                                        onChange={(e) => {
+                                            setUserAnswer(e.target.value);
+                                            setCaptchaError("");
+                                        }}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Digite o resultado"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={generateCaptcha}
+                                        className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                                    >
+                                        Gerar nova pergunta
+                                    </button>
+                                    {captchaError && (
+                                        <p className="mt-1 text-sm text-red-600">{captchaError}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {error && (
                                 <div className="text-red-600 text-sm">
@@ -174,6 +282,7 @@
                 const [showModal, setShowModal] = React.useState(false);
                 const [codigo, setCodigo] = React.useState("");
                 const [error, setError] = React.useState("");
+                const [telefone, setTelefone] = React.useState(""); // Adicionado estado para telefone
 
                 // Função para entrar em tela cheia
                 const enterFullscreen = () => {
@@ -198,52 +307,6 @@
                     setIsFullscreen(false);
                     if (screen.orientation) {
                         screen.orientation.unlock();
-                    }
-                };
-
-                const generatePDF = async () => {
-                    try {
-                        setIsLoading(true);
-
-                        // Comprimir a imagem antes de enviar
-                        const compressedPhoto =
-                            photo && (await compressImage(photo));
-
-                        const response = await fetch("/api/generate-card", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                                name,
-                                memberNumber,
-                                cpf,
-                                issueDate,
-                                validUntil,
-                                photo: compressedPhoto || null,
-                            }),
-                        });
-
-                        if (!response.ok) {
-                            throw new Error("Erro ao gerar PDF");
-                        }
-
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = "carteirinha.pdf";
-                        document.body.appendChild(a);
-                        a.click();
-
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-                    } catch (error) {
-                        console.error("Erro:", error);
-                        alert("Erro ao gerar carteirinha");
-                    } finally {
-                        setIsLoading(false);
                     }
                 };
 
@@ -446,9 +509,11 @@
                         <div className="bg-white rounded-lg shadow-lg p-6 border-2 border-blue-600 relative overflow-hidden">
                             {/* Marca d'água */}
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="transform rotate-[-30deg] text-gray-100 text-7xl font-bold select-none">
-                                    SINTRAPORT
-                                </div>
+                                <img
+                                    src="./logo-sintraport.png"
+                                    alt="Logo Sintraport"
+                                    className="w-[500px] opacity-10 select-none transform rotate-[-30deg]"
+                                />
                             </div>
 
                             {/* Conteúdo principal (mantido sobre a marca d'água) */}
@@ -578,6 +643,7 @@
 
                                             if (data.success) {
                                                 setShowModal(true);
+                                                setTelefone(data.telefone); // Adicione este estado: const [telefone, setTelefone] = React.useState('');
                                             } else {
                                                 setError(
                                                     data.message ||
@@ -607,8 +673,7 @@
                                         Digite o código de verificação
                                     </h2>
                                     <p className="text-gray-600 mb-4">
-                                        Um código foi enviado para seu email
-                                        cadastrado
+                                        Um código foi enviado para seu celular {telefone}
                                     </p>
 
                                     <input

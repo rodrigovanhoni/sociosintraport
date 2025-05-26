@@ -16,7 +16,28 @@ const upload = multer({
   },
 });
 
+// Configuração para múltiplos campos (usado no cadastro de dependentes)
+const uploadMultiple = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+}).fields([
+  { name: "foto", maxCount: 1 },
+  { name: "documento", maxCount: 1 },
+]);
+
 //const upload = multer();
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
+
+// Configuração do SNS (adicione junto com outras configurações)
+const sns = new SNSClient({
+  region: 'sa-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+});
 
 const app = express();
 app.use(bodyParser.json());
@@ -122,46 +143,74 @@ async function enviarCodigoVerificacao(email) {
   }
 }
 
-app.post("/solicitar-codigo", async (req, res) => {
-  const { cpf } = req.body;
-
-  try {
-    // Verifica se o email existe na base
-    const checkEmail = await pool.query("SELECT * FROM socios WHERE cpf = $1", [
-      cpf,
-    ]);
-
-    if (checkEmail.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "não encontrado na base de dados",
-      });
+// Função para formatar o número de telefone
+function formatPhoneNumber(phone) {
+    if (!phone) return null;
+    
+    // Remove todos os caracteres não numéricos
+    let numbers = phone.replace(/\D/g, '');
+    
+    // Verifica se tem 11 dígitos (DDD + 9 + número)
+    if (numbers.length !== 11) {
+        console.log('Número de telefone inválido:', phone);
+        return null;
     }
+    
+    // Adiciona o código do país (+55) e retorna
+    return `+55${numbers}`;
+}
 
-    const user = checkEmail.rows[0];
-
-    // Gera e envia o código
-    const codigo = await enviarCodigoVerificacao(user.email);
-
-    // Salva o código no banco (você pode criar uma nova tabela para isso)
-    await pool.query(
-      `UPDATE socios 
-       SET verification_code = $1, 
-           code_expiration = NOW() + INTERVAL '10 minutes'
-       WHERE cpf = $2`,
-      [codigo, cpf],
+// Modifique a rota /solicitar-codigo para enviar tanto email quanto SMS
+app.post('/solicitar-codigo', async (req, res) => {
+  const { cpf } = req.body;
+  
+  try {
+    // Busque o sócio no banco de dados (mantenha seu código atual)
+    const socio = await pool.query(
+      'SELECT * FROM socios WHERE cpf = $1',
+      [cpf]
     );
 
-    res.json({
-      success: true,
-      message: "Código enviado com sucesso",
+    if (socio.rows.length === 0) {
+      return res.json({ success: false, message: 'Sócio não encontrado' });
+    }
+
+    // Gere o código (mantenha seu código atual)
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Salve o código no banco (mantenha seu código atual)
+    await pool.query(
+      'UPDATE socios SET verification_code = $1, code_expiration = NOW() + INTERVAL \'5 minutes\' WHERE cpf = $2',
+      [codigo, cpf]
+    );
+
+    // Envie o email (mantenha seu código atual)
+    //await enviarEmail(socio.rows[0].email, 'Código de Verificação', `Seu código é: ${codigo}`);
+
+    // Adicione o envio do SMSconst phoneNumber = formatPhoneNumber(socio.rows[0].telefone);
+    const phoneNumber = formatPhoneNumber(socio.rows[0].telefone); // Certifique-se de que este campo existe na sua tabela
+    const ultimosDigitos = phoneNumber.slice(-4); // Pega os últimos 4 dígitos
+
+    if (phoneNumber) {
+      console.log('Número de telefone:', phoneNumber);
+      console.log('Credenciais AWS:', process.env.AWS_ACCESS_KEY_ID ? 'Presente' : 'Ausente');
+      const params = {
+        Message: `Seu código de verificação do Sintraport é: ${codigo}`,
+        PhoneNumber: phoneNumber, // Certifique-se de que está no formato +5541999999999
+      };
+
+      const command = new PublishCommand(params);
+      await sns.send(command);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Código enviado com sucesso',
+      telefone: `*****-${ultimosDigitos}` // Retorna os últimos dígitos mascarados
     });
   } catch (error) {
-    console.error("Erro:", error);
-    res.status(500).json({
-      success: false,
-      message: "Erro ao processar solicitação",
-    });
+    console.error('Erro:', error);
+    res.json({ success: false, message: 'Erro ao enviar código' });
   }
 });
 
@@ -187,6 +236,7 @@ app.post("/verificar-codigo", async (req, res) => {
     // Salva o ID do sócio na session
     req.session.socioId = result.rows[0].id;
     req.session.authenticated = true;
+    req.session.isMaster = false;
 
     await pool.query(
       "UPDATE socios SET verification_code = NULL, code_expiration = NULL WHERE cpf = $1",
@@ -197,6 +247,7 @@ app.post("/verificar-codigo", async (req, res) => {
       success: true,
       message: "Código verificado com sucesso",
       socioId: result.rows[0].id,
+      
     });
   } catch (error) {
     console.error("Erro:", error);
@@ -228,8 +279,13 @@ app.post("/login", (req, res) => {
       if (err) throw err;
 
       if (isMatch) {
+        console.log('logando...');
         // Login bem-sucedido, inicia a sessão
         req.session.userId = user.id;
+        req.session.socioId = user.id;
+        req.session.authenticated = true;
+        req.session.master = true;
+
         res.json({ success: true });
       } else {
         res.json({ success: false, type: 2, pass: senha, newpass: user.senha });
@@ -237,6 +293,7 @@ app.post("/login", (req, res) => {
     });
   });
 });
+
 
 app.post("/logout", (req, res) => {
   req.session.destroy((err) => {
@@ -262,7 +319,7 @@ app.post("/socios", (req, res) => {
     telefone,
     matricula,
     aposentado,
-    grupoWhats,
+    grupowhats,
     cargo,
     dataadmissao,
     dataassociacao,
@@ -271,6 +328,10 @@ app.post("/socios", (req, res) => {
     enderecoobs,
     apelido,
     estadocivil,
+    enderecocep, 
+    enderecobairro, 
+    enderecocidade, 
+    enderecoestado,
   } = req.body;
 
   // Campos obrigatórios
@@ -288,7 +349,7 @@ app.post("/socios", (req, res) => {
     telefone,
     matricula,
     aposentado,
-    grupoWhats,
+    grupowhats,
     cargo,
     dataadmissao,
     dataassociacao,
@@ -297,6 +358,10 @@ app.post("/socios", (req, res) => {
     enderecoobs,
     apelido,
     estadocivil,
+    enderecocep, 
+    enderecobairro, 
+    enderecocidade, 
+    enderecoestado,
   };
 
   // Log dos dados após destructuring
@@ -339,13 +404,20 @@ app.post("/socios", (req, res) => {
   pool
     .query(sql, params)
     .then((result) => {
-      res.send("Sócio cadastrado com sucesso");
+      res.json({ 
+        success: true, 
+        message: "Sócio cadastrado com sucesso"
+      });
     })
     .catch((err) => {
       console.error("Erro completo:", err);
-      res.status(500).send("Erro ao cadastrar sócio");
+      res.status(500).json({ 
+        success: false, 
+        message: "Erro ao cadastrar sócio"
+      });
     });
 });
+
 
 /*app.post('/socios', (req, res) => {
 
@@ -415,6 +487,35 @@ app.get("/cargos", (req, res) => {
       res.status(500).send("Erro ao buscar cargos");
     });
 });
+
+app.get('/editar-socio/:id', checkAuth, async (req, res) => {
+  try {
+      // Busca os dados do sócio
+      const socioResult = await pool.query('SELECT * FROM socios WHERE id = $1', [req.params.id]);
+      const socio = socioResult.rows[0];
+      
+      // Busca os cargos
+      const cargos = await pool.query('SELECT * FROM cargo');
+      
+      if (!socio) {
+          return res.status(404).send('Sócio não encontrado');
+      }
+      console.log('Cargos:', cargos.rows); // Adicione esta linha
+      console.log('Sócio:', socio); // E esta linha
+
+      // Renderiza a mesma view, mas com dados do sócio e modo edição
+      res.render('novo-socio', {
+          user: req.user,
+          cargos: cargos.rows,
+          socio: socio,
+          modoEdicao: true
+      });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send("Erro ao carregar página");
+  }
+});
+
 
 app.get("/socios", (req, res) => {
   const sql = "SELECT * FROM socios";
@@ -491,12 +592,12 @@ app.get("/dependentes/:id", checkAuth, async (req, res) => {
     const { id } = req.params;
 
     // Verifica se o ID da URL corresponde ao ID da session
-    if (parseInt(id) !== req.session.socioId) {
+    if (!req.session.master && parseInt(id) !== req.session.socioId) {
       return res.redirect("/"); // Ou envie uma mensagem de erro
     }
 
     const socioResult = await pool.query(
-      "SELECT nome FROM socios WHERE id = $1",
+      "SELECT * FROM socios WHERE id = $1",
       [id],
     );
 
@@ -513,6 +614,7 @@ app.get("/dependentes/:id", checkAuth, async (req, res) => {
       socio: socioResult.rows[0],
       dependentes: dependentesResult.rows,
       socioId: id,
+      isMaster: !!req.session.master, // Passa a informação se é diretor
     });
   } catch (error) {
     console.error("Erro:", error);
@@ -520,15 +622,23 @@ app.get("/dependentes/:id", checkAuth, async (req, res) => {
   }
 });
 
-// Protege a rota POST também
-app.post("/dependentes", checkAuth, upload.single("foto"), async (req, res) => {
+// Rota de cadastro atualizada
+app.post("/dependentes", checkAuth, uploadMultiple, async (req, res) => {
   try {
     const { nome, cpf, parentesco, data_nascimento, socio_id } = req.body;
     let fotoBase64 = null;
+    let documentoBase64 = null;
 
     // Se uma foto foi enviada, converte para base64
-    if (req.file) {
-      fotoBase64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    if (req.files["foto"]) {
+      const foto = req.files["foto"][0];
+      fotoBase64 = `data:${foto.mimetype};base64,${foto.buffer.toString("base64")}`;
+    }
+
+    // Se um documento foi enviado, converte para base64
+    if (req.files["documento"]) {
+      const documento = req.files["documento"][0];
+      documentoBase64 = `data:${documento.mimetype};base64,${documento.buffer.toString("base64")}`;
     }
 
     // Ajusta a data para evitar o problema do timezone
@@ -536,8 +646,26 @@ app.post("/dependentes", checkAuth, upload.single("foto"), async (req, res) => {
     data.setUTCHours(12);
 
     const result = await pool.query(
-      "INSERT INTO dependentes (nome, cpf, parentesco, data_nascimento, foto, socio_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [nome, cpf, parentesco, data, fotoBase64, socio_id],
+      `INSERT INTO dependentes (
+        nome, 
+        cpf, 
+        parentesco, 
+        data_nascimento, 
+        foto, 
+        documento_comprobatorio,
+        status,
+        socio_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [
+        nome,
+        cpf,
+        parentesco,
+        data,
+        fotoBase64,
+        documentoBase64,
+        "pendente",
+        socio_id,
+      ],
     );
 
     console.log("Data retornada do banco:", result.rows[0].data_nascimento);
@@ -546,6 +674,128 @@ app.post("/dependentes", checkAuth, upload.single("foto"), async (req, res) => {
   } catch (error) {
     console.error("Erro ao cadastrar dependente:", error);
     res.status(500).send("Erro ao cadastrar dependente");
+  }
+});
+
+// Rota para visualizar o documento
+app.get("/dependentes/:id/documento", checkAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      "SELECT documento_comprobatorio FROM dependentes WHERE id = $1",
+      [id],
+    );
+
+    if (!result.rows[0] || !result.rows[0].documento_comprobatorio) {
+      return res.status(404).send("Documento não encontrado");
+    }
+
+    // O documento já está em formato base64 com o tipo MIME
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Documento Comprobatório</title>
+        </head>
+        <body style="margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center;">
+          <embed
+            src="${result.rows[0].documento_comprobatorio}"
+            type="application/pdf"
+            width="100%"
+            height="100%"
+          />
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("Erro ao buscar documento:", error);
+    res.status(500).send("Erro ao buscar documento");
+  }
+});
+
+app.post("/dependentes/:id/status", checkAuth, async (req, res) => {
+  try {
+    // Verifica se é um diretor
+    if (!req.session.master) {
+      return res.status(403).json({ error: "Não autorizado" });
+    }
+
+    const { id } = req.params;
+    const { status, motivo_reprovacao } = req.body;
+
+    // Validação do status
+    if (!["aprovado", "reprovado", "pendente"].includes(status)) {
+      return res.status(400).json({ error: "Status inválido" });
+    }
+
+    // Atualiza o status no banco de dados
+    await pool.query(
+      "UPDATE dependentes SET status = $1, data_homologacao = CURRENT_TIMESTAMP, homologado_por = $2, motivo_reprovacao = $3 WHERE id = $4",
+      [status, req.session.userId, motivo_reprovacao, id],
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Erro:", error);
+    res.status(500).json({ error: "Erro ao atualizar status" });
+  }
+});
+
+app.get('/dependentes-pendentes', checkAuth, async (req, res) => {
+  try {
+      // Busca todos os dependentes pendentes junto com informações do sócio
+      const result = await pool.query(`
+          SELECT 
+              d.*,
+              s.nome as nome_socio,
+              s.cpf as cpf_socio
+          FROM dependentes d
+          JOIN socios s ON d.socio_id = s.id
+          WHERE d.status = 'pendente'
+          ORDER BY s.nome DESC
+      `);
+
+      res.render('dependentes-pendentes', {
+          dependentes: result.rows,
+          user: req.user,
+          isMaster: !!req.session.master
+      });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send("Erro ao carregar dependentes pendentes");
+  }
+});
+
+app.get('/novo-socio', checkAuth, async (req, res) => {
+  try {
+      // Busca os cargos do banco de dados
+      const cargos = await pool.query('SELECT * FROM cargo');
+      
+      res.render('novo-socio', {
+          user: req.user,
+          cargos: cargos.rows,
+          modoEdicao: false, // Indica que é modo de criação
+          socio: {}
+      });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send("Erro ao carregar página");
+  }
+});
+
+app.get('/dependentes-pendentes/contador', checkAuth, async (req, res) => {
+  try {
+      const result = await pool.query(`
+          SELECT COUNT(*) 
+          FROM dependentes 
+          WHERE status = 'pendente'
+      `);
+      
+      res.json({ count: parseInt(result.rows[0].count) });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao buscar pendências" });
   }
 });
 
@@ -580,26 +830,161 @@ app.get("/socios/:id/dependentes", (req, res) => {
 
 app.put("/socios/:id", (req, res) => {
   const { id } = req.params;
-  const { nome, cpf, data_nascimento, parentesco, socio } = req.body;
-  const sql = `
-    UPDATE socios 
-    SET nome = $1, cpf = $2, data_nascimento = $3, parentesco = $4, socio = $5 
-    WHERE id = $6
-    RETURNING *`; // RETURNING * é útil para confirmar a atualização
+  const { 
+    nome, cpf, data_nascimento, email, telefone, 
+    aposentado, grupowhats, cargo, matricula, // Adicionado matrícula
+    dataadmissao, dataassociacao, enderecocep, 
+    enderecorua, endereconum, enderecoobs, 
+    enderecobairro, enderecocidade, enderecoestado, 
+    apelido, estadocivil 
+} = req.body;
 
-  pool
-    .query(sql, [nome, cpf, data_nascimento, parentesco, socio, id])
-    .then((result) => {
-      if (result.rowCount === 0) {
-        // Nenhum registro foi atualizado
-        return res.status(404).send("Sócio não encontrado");
-      }
-      res.send("Atualizado com sucesso");
+    console.log(data_nascimento);
+    console.log(dataassociacao);
+    console.log(dataadmissao);
+    console.log(estadocivil);
+
+     // Tratamento para campos numéricos
+     const endereconumTratado = endereconum === '' ? null : endereconum;
+    
+    
+    // Converter strings vazias para null e tratar tipos numéricos
+    const aposentadoNum = aposentado === '' ? null : parseInt(aposentado);
+    const grupowhatsNum = grupowhats === '' ? null : parseInt(grupowhats);
+    const cargoNum = cargo === '' ? null : parseInt(cargo);
+    const matriculaNum = matricula === '' ? null : parseInt(matricula); // Adicionado conversão da matrícula
+
+    
+
+  const sql = `UPDATE socios 
+        SET nome = NULLIF($1, ''),
+            cpf = NULLIF($2, ''),
+            data_nascimento = $3::date,
+            email = NULLIF($4, ''),
+            telefone = NULLIF($5, ''),
+            aposentado = $6,
+            grupowhats = $7,
+            cargo = $8,
+            matricula = $9, /* Adicionado matrícula */
+            dataadmissao = $10::date,
+            dataassociacao = $11::date,
+            enderecocep = NULLIF($12, ''),
+            enderecorua = NULLIF($13, ''),
+            endereconum = NULLIF($14, ''),
+            enderecoobs = NULLIF($15, ''),
+            enderecobairro = NULLIF($16, ''),
+            enderecocidade = NULLIF($17, ''),
+            enderecoestado = NULLIF($18, ''),
+            apelido = NULLIF($19, ''),
+            estadocivil = NULLIF($20, '')
+        WHERE id = $21
+        RETURNING *`;
+
+        const sqlParams = [
+          nome, 
+          cpf, 
+          data_nascimento,
+          email,
+          telefone,
+          aposentadoNum,
+          grupowhatsNum,
+          cargoNum,
+          matriculaNum, // Adicionado matrícula
+          dataadmissao,
+          dataassociacao,
+          enderecocep,
+          enderecorua,
+          endereconum,
+          enderecoobs,
+          enderecobairro,
+          enderecocidade,
+          enderecoestado,
+          apelido,
+          estadocivil,
+          id
+        ];
+
+        console.log('SQL Query:', sql);
+        console.log('Parâmetros:', sqlParams);  
+    pool.query(sql,sqlParams)
+    
+    .then(result => {
+        if (result.rowCount === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Sócio não encontrado" 
+            });
+        }
+        res.json({ 
+            success: true, 
+            message: "Atualizado com sucesso" 
+        });
     })
-    .catch((err) => {
-      console.error("Erro ao atualizar sócio:", err);
-      res.status(500).send("Erro ao atualizar sócio");
+    .catch(err => {
+        console.error("Erro ao atualizar sócio(1):", err);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erro ao atualizar sócio(2)" 
+        });
     });
+});
+
+app.put("/socios/:id/atualizar-contato", (req, res) => {
+  const { id } = req.params;
+  const { 
+      email, telefone, 
+      enderecocep, enderecorua, endereconum, enderecoobs, 
+      enderecobairro, enderecocidade, enderecoestado 
+  } = req.body;
+
+  const sql = `
+      UPDATE socios 
+      SET email = NULLIF($1, ''),
+          telefone = NULLIF($2, ''),
+          enderecocep = NULLIF($3, ''),
+          enderecorua = NULLIF($4, ''),
+          endereconum = NULLIF($5, ''),
+          enderecoobs = NULLIF($6, ''),
+          enderecobairro = NULLIF($7, ''),
+          enderecocidade = NULLIF($8, ''),
+          enderecoestado = NULLIF($9, '')
+      WHERE id = $10
+      RETURNING *
+  `;
+
+  const sqlParams = [
+      email,
+      telefone,
+      enderecocep,
+      enderecorua,
+      endereconum,
+      enderecoobs,
+      enderecobairro,
+      enderecocidade,
+      enderecoestado,
+      id
+  ];
+
+  pool.query(sql, sqlParams)
+      .then(result => {
+          if (result.rowCount === 0) {
+              return res.status(404).json({ 
+                  success: false, 
+                  message: "Sócio não encontrado" 
+              });
+          }
+          res.json({ 
+              success: true, 
+              message: "Dados de contato atualizados com sucesso" 
+          });
+      })
+      .catch(err => {
+          console.error("Erro ao atualizar dados de contato:", err);
+          res.status(500).json({ 
+              success: false, 
+              message: "Erro ao atualizar dados de contato" 
+          });
+      });
 });
 
 // Delete a member
@@ -745,7 +1130,27 @@ app.get("/api/member/:cpf", async (req, res) => {
         "SELECT *, false as is_socio FROM dependentes WHERE cpf = $1",
         [cpf],
       );
+
+      // Se for dependente, verifica o status
+      if (socioResult.rows.length > 0) {
+        console.log("dependente encontrado");
+        const dependente = socioResult.rows[0];
+        if (dependente.status === 'pendente') {
+          return res.status(403).json({ 
+            error: "Dependente aguardando aprovação",
+            status: "pendente"
+          });
+        } else if (dependente.status === 'reprovado') {
+          return res.status(403).json({ 
+            error: "Cadastro de dependente não aprovado",
+            status: "reprovado",
+            motivo: dependente.motivo_reprovacao
+          });
+        }
+      }
+
     }
+   
 
     if (socioResult.rows.length === 0) {
       return res.status(404).json({ error: "CPF não encontrado" });
