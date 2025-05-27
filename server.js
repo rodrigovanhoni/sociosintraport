@@ -194,6 +194,13 @@ app.post('/solicitar-codigo', async (req, res) => {
     if (phoneNumber) {
       console.log('Número de telefone:', phoneNumber);
       console.log('Credenciais AWS:', process.env.AWS_ACCESS_KEY_ID ? 'Presente' : 'Ausente');
+      console.log('AWS Config:', {
+        region: process.env.AWS_REGION || 'não definida',
+        accessKeyIdPresente: !!process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKeyPresente: !!process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyIdComprimento: process.env.AWS_ACCESS_KEY_ID?.length,
+        secretAccessKeyComprimento: process.env.AWS_SECRET_ACCESS_KEY?.length
+      });
       const params = {
         Message: `Seu código de verificação do Sintraport é: ${codigo}`,
         PhoneNumber: phoneNumber, // Certifique-se de que está no formato +5541999999999
